@@ -1,5 +1,6 @@
 import { Moon, Sun, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import logo from "@/assets/logo.png";
 import { UsageBar } from "@/components/dashboard/UsageBar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -44,9 +45,7 @@ export function AppShell({
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           {/* Left: Logo + org */}
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-heading text-xs font-bold text-primary-foreground">
-              PG
-            </div>
+            <img src={logo} alt="Prompt Genius SaaS Builder" className="h-8 w-auto" />
             {orgName && (
               <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
                 {orgName}
