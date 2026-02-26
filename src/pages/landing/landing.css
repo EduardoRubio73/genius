@@ -116,7 +116,7 @@
 /* HERO LOGO */
 .landing-page .hero-logo-wrap { margin-bottom: 8px; animation: landing-fd .6s ease 0s both; }
 .landing-page .hero-logo {
-  height: clamp(90px,12vw,140px); width: auto;
+  height: clamp(180px,22vw,280px); width: auto;
   filter: drop-shadow(0 0 28px rgba(0,200,255,.55)) drop-shadow(0 0 60px rgba(168,85,247,.35));
   animation: landing-logo-float 4s ease-in-out infinite;
   transition: filter .3s;
