@@ -7,6 +7,7 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SuperAdminGuard } from "@/components/guards/SuperAdminGuard";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import LandingPage from "./pages/landing/LandingPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -27,7 +28,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route
             path="/dashboard"
