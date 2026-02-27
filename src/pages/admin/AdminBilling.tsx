@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PlanBadge, SubStatusBadge } from "@/components/admin/Badges";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function AdminBilling() {
   const [tab, setTab] = useState<"subscriptions" | "invoices">("subscriptions");
