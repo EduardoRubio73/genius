@@ -170,6 +170,7 @@ export default function PromptMode() {
       if (promptErr) throw promptErr;
 
       setIsSaved(true);
+      setMemoryRefreshKey(k => k + 1);
       toast.success("Prompt salvo com sucesso!");
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
