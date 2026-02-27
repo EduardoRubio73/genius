@@ -12,7 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const filterOptions = [
-  { value: "", label: "Todos" },
+  { value: "all", label: "Todos" },
   { value: "prompt_memory", label: "Prompts" },
   { value: "saas_specs", label: "SaaS Specs" },
   { value: "billing", label: "Billing" },
