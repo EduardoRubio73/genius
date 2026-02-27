@@ -1,5 +1,6 @@
 import { Moon, Sun, LogOut, Settings, User, ChevronDown, Zap } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
