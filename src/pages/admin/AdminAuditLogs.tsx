@@ -12,7 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const filterOptions = [
-  { value: "", label: "Todos" },
+  { value: "all", label: "Todos" },
   { value: "prompt_memory", label: "Prompts" },
   { value: "saas_specs", label: "SaaS Specs" },
   { value: "billing", label: "Billing" },
@@ -28,8 +28,8 @@ function getActionColor(action: string) {
 
 export default function AdminAuditLogs() {
   const [page, setPage] = useState(0);
-  const [filter, setFilter] = useState("");
-  const { data: logs, isLoading } = useAdminAuditLogs(page, filter);
+  const [filter, setFilter] = useState("all");
+  const { data: logs, isLoading } = useAdminAuditLogs(page, filter === "all" ? "" : filter);
   const mono = { fontFamily: "'IBM Plex Mono', monospace" };
 
   return (
