@@ -187,106 +187,114 @@ export default function PromptMode() {
   const activeStepIdx = step === "input" ? 0 : step === "generating" ? 1 : 2;
 
   return (
-    <div className="noise-overlay relative min-h-screen bg-background">
-      <div className="misto-header">
-        <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
-        <div className="misto-mode-badge" style={{ background: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary) / 0.25)" }}>
-          <span className="misto-badge-pulse" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 8px hsl(var(--primary))" }} />
-          <span style={{ color: "hsl(var(--primary))" }}>✨ Modo Prompt</span>
+    <div className="noise-overlay relative min-h-screen bg-background flex">
+      <div className="flex-1 min-w-0">
+        <div className="misto-header">
+          <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
+          <div className="misto-mode-badge" style={{ background: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary) / 0.25)" }}>
+            <span className="misto-badge-pulse" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 8px hsl(var(--primary))" }} />
+            <span style={{ color: "hsl(var(--primary))" }}>✨ Modo Prompt</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <div className="misto-credits-pill"><strong>{creditBalance ?? "—"}</strong> cotas restantes</div>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          <div className="misto-credits-pill"><strong>{creditBalance ?? "—"}</strong> cotas restantes</div>
-        </div>
-      </div>
 
-      {/* Stepper */}
-      <div className="misto-stepper">
-        <div className="step-track">
-          {stepsDef.map((s, i) => {
-            const isDone = i < activeStepIdx;
-            const isActive = i === activeStepIdx;
-            return (
-              <div key={i} className={`step-node ${isDone ? "done" : isActive ? "active" : "future"}`}>
-                <div className={`step-circle ${isDone ? "sc-done" : isActive ? "sc-active" : "sc-future"}`}>
-                  {isDone ? "✓" : i + 1}
-                </div>
-                <div className={`step-label ${isDone ? "sl-done" : isActive ? "sl-active" : "sl-future"}`}>{s.label}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="misto-content">
-        {step === "input" && (
-          <PromptInput
-            freeText={freeText} onFreeTextChange={setFreeText}
-            manualFields={manualFields} onManualFieldsChange={setManualFields}
-            inputMode={inputMode} onInputModeChange={setInputMode}
-            destino={destino} onDestinoChange={setDestino}
-            onGenerate={handleGenerate} isGenerating={isGenerating}
-          />
-        )}
-
-        {step === "generating" && (
-          <MistoRefining fields={fields} promptPreview={promptGerado} status={genStatus} />
-        )}
-
-        {step === "results" && fields && (
-          <div className="misto-step-enter">
-            <div className="misto-result-header">
-              <div>
-                <div className="misto-rh-title">Prompt Gerado ✨</div>
-                <div className="misto-rh-badges">
-                  <span className="misto-rb misto-rb-time">⏱ {timeElapsed.toFixed(1)}s</span>
-                  <span className="misto-rb misto-rb-cota">1 cota consumida</span>
-                </div>
-              </div>
-              <div className="misto-rh-actions">
-                <button className="misto-btn-sm" onClick={handleNewSession}>Nova Sessão</button>
-                <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
-                  {isSaved ? "Salvo ✓" : "Salvar"}
-                </button>
-              </div>
-            </div>
-
-            <div className="misto-result-panel">
-              <div className="misto-fields-result">
-                {(["especialidade","persona","tarefa","objetivo","contexto","destino"] as const).map((key) => (
-                  <div key={key} className="misto-field-result-card">
-                    <div className="misto-frc-label">{key}</div>
-                    <div className="misto-frc-val">{fields[key]}</div>
+        {/* Stepper */}
+        <div className="misto-stepper">
+          <div className="step-track">
+            {stepsDef.map((s, i) => {
+              const isDone = i < activeStepIdx;
+              const isActive = i === activeStepIdx;
+              return (
+                <div key={i} className={`step-node ${isDone ? "done" : isActive ? "active" : "future"}`}>
+                  <div className={`step-circle ${isDone ? "sc-done" : isActive ? "sc-active" : "sc-future"}`}>
+                    {isDone ? "✓" : i + 1}
                   </div>
-                ))}
-              </div>
-              <div className="misto-prompt-final-box">
-                <div className="misto-pfb-header">
-                  <div className="misto-pfb-label">Prompt Final</div>
-                  <button className="misto-copy-btn" onClick={() => { navigator.clipboard.writeText(promptGerado); toast.success("Copiado!"); }}>
-                    Copiar
+                  <div className={`step-label ${isDone ? "sl-done" : isActive ? "sl-active" : "sl-future"}`}>{s.label}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="misto-content">
+          {step === "input" && (
+            <PromptInput
+              freeText={freeText} onFreeTextChange={setFreeText}
+              manualFields={manualFields} onManualFieldsChange={setManualFields}
+              inputMode={inputMode} onInputModeChange={setInputMode}
+              destino={destino} onDestinoChange={setDestino}
+              onGenerate={handleGenerate} isGenerating={isGenerating}
+            />
+          )}
+
+          {step === "generating" && (
+            <MistoRefining fields={fields} promptPreview={promptGerado} status={genStatus} />
+          )}
+
+          {step === "results" && fields && (
+            <div className="misto-step-enter">
+              <div className="misto-result-header">
+                <div>
+                  <div className="misto-rh-title">Prompt Gerado ✨</div>
+                  <div className="misto-rh-badges">
+                    <span className="misto-rb misto-rb-time">⏱ {timeElapsed.toFixed(1)}s</span>
+                    <span className="misto-rb misto-rb-cota">1 cota consumida</span>
+                  </div>
+                </div>
+                <div className="misto-rh-actions">
+                  <button className="misto-btn-sm" onClick={handleNewSession}>Nova Sessão</button>
+                  <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
+                    {isSaved ? "Salvo ✓" : "Salvar"}
                   </button>
                 </div>
-                <div className="misto-prompt-text">{promptGerado}</div>
               </div>
-              <div style={{ marginTop: 16 }}>
-                <div className="misto-rating-row">
-                  <span className="misto-rating-label">Avaliar:</span>
-                  <div className="misto-stars">
-                    {[1,2,3,4,5].map(n => (
-                      <button key={n} className={`misto-star ${n <= promptRating ? "on" : ""}`} onClick={() => setPromptRating(n)}>★</button>
-                    ))}
+
+              <div className="misto-result-panel">
+                <div className="misto-fields-result">
+                  {(["especialidade","persona","tarefa","objetivo","contexto","destino"] as const).map((key) => (
+                    <div key={key} className="misto-field-result-card">
+                      <div className="misto-frc-label">{key}</div>
+                      <div className="misto-frc-val">{fields[key]}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="misto-prompt-final-box">
+                  <div className="misto-pfb-header">
+                    <div className="misto-pfb-label">Prompt Final</div>
+                    <button className="misto-copy-btn" onClick={() => { navigator.clipboard.writeText(promptGerado); toast.success("Copiado!"); }}>
+                      Copiar
+                    </button>
+                  </div>
+                  <div className="misto-prompt-text">{promptGerado}</div>
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <div className="misto-rating-row">
+                    <span className="misto-rating-label">Avaliar:</span>
+                    <div className="misto-stars">
+                      {[1,2,3,4,5].map(n => (
+                        <button key={n} className={`misto-star ${n <= promptRating ? "on" : ""}`} onClick={() => setPromptRating(n)}>★</button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        {creditModal && <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />}
       </div>
 
-      {creditModal && <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />}
+      <UnifiedMemorySidebar
+        refreshKey={memoryRefreshKey}
+        orgId={orgId}
+        defaultMode="prompt"
+      />
     </div>
   );
 }
