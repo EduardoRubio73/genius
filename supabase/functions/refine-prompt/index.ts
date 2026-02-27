@@ -86,7 +86,7 @@ Responda APENAS com JSON válido contendo os campos melhorados + "prompt_gerado"
 {"especialidade":"...","persona":"...","tarefa":"...","objetivo":"...","contexto":"...","destino":"...","prompt_gerado":"O prompt completo e otimizado aqui"}`;
 
   const userMsg = JSON.stringify(fields);
-  const result = await callGemini(system, userMsg);
+  const result = await callLLM(system, userMsg);
   return parseJsonFromLLM(result);
 }
 
