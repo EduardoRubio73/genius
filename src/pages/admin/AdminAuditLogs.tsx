@@ -28,7 +28,7 @@ function getActionColor(action: string) {
 
 export default function AdminAuditLogs() {
   const [page, setPage] = useState(0);
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState("all");
   const { data: logs, isLoading } = useAdminAuditLogs(page, filter);
   const mono = { fontFamily: "'IBM Plex Mono', monospace" };
 
