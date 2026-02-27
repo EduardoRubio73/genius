@@ -1,1 +1,4 @@
 project_id = "pcaebfncvuvdguyjmyxm"
+
+[functions.refine-prompt]
+verify_jwt = false
