@@ -15,7 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+// Badge removed — not currently used
 import {
   Tooltip,
   TooltipContent,
