@@ -17,6 +17,7 @@ import { SaasStep6 } from "@/components/saas/SaasStep6";
 import { SaasStep7 } from "@/components/saas/SaasStep7";
 import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { CreditModal } from "@/components/misto/CreditModal";
+import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 
 import "../misto/misto.css";
 
