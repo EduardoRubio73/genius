@@ -45,7 +45,11 @@ const App = () => (
           />
           <Route
             path="/mixed"
-            element={<AuthGuard><PlaceholderPage title="Modo Misto" /></AuthGuard>}
+            element={<AuthGuard><MistoMode /></AuthGuard>}
+          />
+          <Route
+            path="/misto"
+            element={<AuthGuard><MistoMode /></AuthGuard>}
           />
           {/* Admin routes */}
           <Route
