@@ -212,7 +212,7 @@ export default function Dashboard() {
   const isBudgetLoading = profileLoading || budgetLoading;
 
   const totalActions = (stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0);
-  const avgRating = stats?.avg_rating ? Number(stats.avg_rating).toFixed(1) : "—";
+  const avgRating = stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—";
 
   return (
     <AppShell
