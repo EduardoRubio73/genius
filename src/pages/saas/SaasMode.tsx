@@ -179,6 +179,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
       if (specErr) throw specErr;
 
       setIsSaved(true);
+      setMemoryRefreshKey(k => k + 1);
       toast.success("Spec salva com sucesso!");
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
