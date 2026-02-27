@@ -17,6 +17,7 @@ import { SaasStep6 } from "@/components/saas/SaasStep6";
 import { SaasStep7 } from "@/components/saas/SaasStep7";
 import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { CreditModal } from "@/components/misto/CreditModal";
+import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 
 import "../misto/misto.css";
 
@@ -66,6 +67,7 @@ export default function SaasMode() {
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const startTime = useRef(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
 
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
@@ -177,6 +179,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
       if (specErr) throw specErr;
 
       setIsSaved(true);
+      setMemoryRefreshKey(k => k + 1);
       toast.success("Spec salva com sucesso!");
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
@@ -200,75 +203,83 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
   };
 
   return (
-    <div className="noise-overlay relative min-h-screen bg-background">
-      <div className="misto-header">
-        <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
-        <div className="misto-mode-badge" style={{ background: "hsl(var(--accent) / 0.1)", borderColor: "hsl(var(--accent) / 0.25)" }}>
-          <span className="misto-badge-pulse" style={{ background: "hsl(var(--accent))", boxShadow: "0 0 8px hsl(var(--accent))" }} />
-          <span style={{ color: "hsl(var(--accent))" }}>🏗️ SaaS Builder</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          <div className="misto-credits-pill"><strong>{creditBalance ?? "—"}</strong> cotas</div>
-        </div>
-      </div>
-
-      {typeof step === "number" && <SaasStepper currentStep={step} />}
-
-      <div className="misto-content">
-        {step === 1 && <SaasStep1 answers={answers} onChange={updateAnswers} onNext={() => setStep(2)} canNext={canNext(1)} />}
-        {step === 2 && <SaasStep2 answers={answers} onChange={updateAnswers} onNext={() => setStep(3)} onPrev={() => setStep(1)} canNext={canNext(2)} />}
-        {step === 3 && <SaasStep3 answers={answers} onChange={updateAnswers} onNext={() => setStep(4)} onPrev={() => setStep(2)} canNext={canNext(3)} />}
-        {step === 4 && <SaasStep4 answers={answers} onChange={updateAnswers} onNext={() => setStep(5)} onPrev={() => setStep(3)} canNext={canNext(4)} />}
-        {step === 5 && <SaasStep5 answers={answers} onChange={updateAnswers} onNext={() => setStep(6)} onPrev={() => setStep(4)} canNext={canNext(5)} />}
-        {step === 6 && <SaasStep6 answers={answers} onChange={updateAnswers} onNext={() => setStep(7)} onPrev={() => setStep(5)} canNext={canNext(6)} />}
-        {step === 7 && <SaasStep7 answers={answers} onChange={updateAnswers} onGenerate={handleGenerate} onPrev={() => setStep(6)} canNext={canNext(7)} />}
-
-        {step === "generating" && <MistoSpecLoading />}
-
-        {step === "results" && (
-          <div className="misto-step-enter">
-            <div className="misto-result-header">
-              <div>
-                <div className="misto-rh-title">Spec Técnica Pronta 🏗️</div>
-                <div className="misto-rh-badges">
-                  <span className="misto-rb misto-rb-time">⏱ {timeElapsed.toFixed(1)}s</span>
-                  <span className="misto-rb misto-rb-cota">1 cota consumida</span>
-                </div>
-              </div>
-              <div className="misto-rh-actions">
-                <button className="misto-btn-sm" onClick={handleNewSession}>Nova Spec</button>
-                <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
-                  {isSaved ? "Salva ✓" : "Salvar"}
-                </button>
-              </div>
-            </div>
-
-            <div className="misto-result-panel">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <span className="misto-pfb-label" style={{ color: "hsl(var(--accent))" }}>Spec Técnica — Markdown</span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="misto-copy-btn misto-copy-btn-v" onClick={() => copyText(specMarkdown)}>Copiar</button>
-                  <button className="misto-copy-btn misto-copy-btn-v" onClick={downloadMd}>⬇ .md</button>
-                </div>
-              </div>
-              <div className="misto-spec-md" dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(specMarkdown) }} />
-              <div className="misto-rating-row">
-                <span className="misto-rating-label">Avaliar spec:</span>
-                <div className="misto-stars">
-                  {[1,2,3,4,5].map(n => (
-                    <button key={n} className={`misto-star ${n <= specRating ? "on" : ""}`} onClick={() => setSpecRating(n)}>★</button>
-                  ))}
-                </div>
-              </div>
-            </div>
+    <div className="noise-overlay relative min-h-screen bg-background flex">
+      <div className="flex-1 min-w-0">
+        <div className="misto-header">
+          <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
+          <div className="misto-mode-badge" style={{ background: "hsl(var(--accent) / 0.1)", borderColor: "hsl(var(--accent) / 0.25)" }}>
+            <span className="misto-badge-pulse" style={{ background: "hsl(var(--accent))", boxShadow: "0 0 8px hsl(var(--accent))" }} />
+            <span style={{ color: "hsl(var(--accent))" }}>🏗️ SaaS Builder</span>
           </div>
-        )}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <div className="misto-credits-pill"><strong>{creditBalance ?? "—"}</strong> cotas</div>
+          </div>
+        </div>
+
+        {typeof step === "number" && <SaasStepper currentStep={step} />}
+
+        <div className="misto-content">
+          {step === 1 && <SaasStep1 answers={answers} onChange={updateAnswers} onNext={() => setStep(2)} canNext={canNext(1)} />}
+          {step === 2 && <SaasStep2 answers={answers} onChange={updateAnswers} onNext={() => setStep(3)} onPrev={() => setStep(1)} canNext={canNext(2)} />}
+          {step === 3 && <SaasStep3 answers={answers} onChange={updateAnswers} onNext={() => setStep(4)} onPrev={() => setStep(2)} canNext={canNext(3)} />}
+          {step === 4 && <SaasStep4 answers={answers} onChange={updateAnswers} onNext={() => setStep(5)} onPrev={() => setStep(3)} canNext={canNext(4)} />}
+          {step === 5 && <SaasStep5 answers={answers} onChange={updateAnswers} onNext={() => setStep(6)} onPrev={() => setStep(4)} canNext={canNext(5)} />}
+          {step === 6 && <SaasStep6 answers={answers} onChange={updateAnswers} onNext={() => setStep(7)} onPrev={() => setStep(5)} canNext={canNext(6)} />}
+          {step === 7 && <SaasStep7 answers={answers} onChange={updateAnswers} onGenerate={handleGenerate} onPrev={() => setStep(6)} canNext={canNext(7)} />}
+
+          {step === "generating" && <MistoSpecLoading />}
+
+          {step === "results" && (
+            <div className="misto-step-enter">
+              <div className="misto-result-header">
+                <div>
+                  <div className="misto-rh-title">Spec Técnica Pronta 🏗️</div>
+                  <div className="misto-rh-badges">
+                    <span className="misto-rb misto-rb-time">⏱ {timeElapsed.toFixed(1)}s</span>
+                    <span className="misto-rb misto-rb-cota">1 cota consumida</span>
+                  </div>
+                </div>
+                <div className="misto-rh-actions">
+                  <button className="misto-btn-sm" onClick={handleNewSession}>Nova Spec</button>
+                  <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
+                    {isSaved ? "Salva ✓" : "Salvar"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="misto-result-panel">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span className="misto-pfb-label" style={{ color: "hsl(var(--accent))" }}>Spec Técnica — Markdown</span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="misto-copy-btn misto-copy-btn-v" onClick={() => copyText(specMarkdown)}>Copiar</button>
+                    <button className="misto-copy-btn misto-copy-btn-v" onClick={downloadMd}>⬇ .md</button>
+                  </div>
+                </div>
+                <div className="misto-spec-md" dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(specMarkdown) }} />
+                <div className="misto-rating-row">
+                  <span className="misto-rating-label">Avaliar spec:</span>
+                  <div className="misto-stars">
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} className={`misto-star ${n <= specRating ? "on" : ""}`} onClick={() => setSpecRating(n)}>★</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {creditModal && <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />}
       </div>
 
-      {creditModal && <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />}
+      <UnifiedMemorySidebar
+        refreshKey={memoryRefreshKey}
+        orgId={orgId}
+        defaultMode="saas"
+      />
     </div>
   );
 }

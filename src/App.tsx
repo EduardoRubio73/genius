@@ -20,6 +20,9 @@ import AdminFlags from "./pages/admin/AdminFlags";
 import MistoMode from "./pages/misto/MistoMode";
 import PromptMode from "./pages/prompt/PromptMode";
 import SaasMode from "./pages/saas/SaasMode";
+import MemoryPage from "./pages/MemoryPage";
+import HistoryPage from "./pages/HistoryPage";
+import ProfilePage from "./pages/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +54,18 @@ const App = () => (
           <Route
             path="/misto"
             element={<AuthGuard><MistoMode /></AuthGuard>}
+          />
+          <Route
+            path="/memory"
+            element={<AuthGuard><MemoryPage /></AuthGuard>}
+          />
+          <Route
+            path="/history"
+            element={<AuthGuard><HistoryPage /></AuthGuard>}
+          />
+          <Route
+            path="/profile"
+            element={<AuthGuard><ProfilePage /></AuthGuard>}
           />
           {/* Admin routes */}
           <Route

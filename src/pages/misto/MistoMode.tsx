@@ -14,6 +14,7 @@ import { MistoRefining } from "@/components/misto/MistoRefining";
 import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { MistoResults } from "@/components/misto/MistoResults";
 import { CreditModal } from "@/components/misto/CreditModal";
+import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 
 import "./misto.css";
 
@@ -52,6 +53,7 @@ export default function MistoMode() {
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const startTime = useRef(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
 
   // Fetch credit balance
   const fetchBalance = useCallback(async () => {
@@ -169,6 +171,7 @@ export default function MistoMode() {
       if (specErr) throw specErr;
 
       setIsSaved(true);
+      setMemoryRefreshKey(k => k + 1);
       toast.success("Sessão salva com sucesso!");
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
@@ -185,38 +188,46 @@ export default function MistoMode() {
   const isGenerating = step !== "input" && step !== "results";
 
   return (
-    <div className="noise-overlay relative min-h-screen bg-background">
-      <div className="misto-header">
-        <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
-        <div className="misto-mode-badge"><span className="misto-badge-pulse" /> ⚡ Modo Misto</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          <div className="misto-credits-pill"><strong>{creditBalance ?? "—"}</strong> cotas restantes</div>
+    <div className="noise-overlay relative min-h-screen bg-background flex">
+      <div className="flex-1 min-w-0">
+        <div className="misto-header">
+          <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
+          <div className="misto-mode-badge"><span className="misto-badge-pulse" /> ⚡ Modo Misto</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <div className="misto-credits-pill"><strong>{creditBalance ?? "—"}</strong> cotas restantes</div>
+          </div>
         </div>
+
+        <MistoStepper currentStep={step} />
+
+        <div className="misto-content">
+          {step === "input" && (
+            <MistoInput userInput={userInput} onInputChange={setUserInput} destino={destino}
+              onDestinoChange={setDestino} onGenerate={handleGenerate} isGenerating={isGenerating} />
+          )}
+          {(step === "distributing" || step === "refining") && (
+            <MistoRefining fields={fields} promptPreview={promptGerado} status={step} />
+          )}
+          {step === "generating-spec" && <MistoSpecLoading />}
+          {step === "results" && fields && (
+            <MistoResults fields={fields} promptGerado={promptGerado} specMarkdown={specMarkdown}
+              userInput={userInput} timeElapsed={timeElapsed} promptRating={promptRating}
+              specRating={specRating} onPromptRating={setPromptRating} onSpecRating={setSpecRating}
+              onNewSession={handleNewSession} onSave={handleSave} isSaved={isSaved} />
+          )}
+        </div>
+
+        {creditModal && <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />}
       </div>
 
-      <MistoStepper currentStep={step} />
-
-      <div className="misto-content">
-        {step === "input" && (
-          <MistoInput userInput={userInput} onInputChange={setUserInput} destino={destino}
-            onDestinoChange={setDestino} onGenerate={handleGenerate} isGenerating={isGenerating} />
-        )}
-        {(step === "distributing" || step === "refining") && (
-          <MistoRefining fields={fields} promptPreview={promptGerado} status={step} />
-        )}
-        {step === "generating-spec" && <MistoSpecLoading />}
-        {step === "results" && fields && (
-          <MistoResults fields={fields} promptGerado={promptGerado} specMarkdown={specMarkdown}
-            userInput={userInput} timeElapsed={timeElapsed} promptRating={promptRating}
-            specRating={specRating} onPromptRating={setPromptRating} onSpecRating={setSpecRating}
-            onNewSession={handleNewSession} onSave={handleSave} isSaved={isSaved} />
-        )}
-      </div>
-
-      {creditModal && <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />}
+      <UnifiedMemorySidebar
+        refreshKey={memoryRefreshKey}
+        orgId={orgId}
+        defaultMode="mixed"
+      />
     </div>
   );
 }

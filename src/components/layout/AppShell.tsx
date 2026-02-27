@@ -1,5 +1,6 @@
 import { Moon, Sun, LogOut, Settings, User, ChevronDown, Zap } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -31,6 +32,7 @@ export function AppShell({
   onSignOut,
 }: AppShellProps) {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   const initials = userName
     ? userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -114,10 +116,10 @@ export function AppShell({
                   )}
                 </div>
 
-                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 text-sm cursor-pointer">
                   <User className="h-4 w-4" /> Meu perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate("/profile?tab=notifications")} className="gap-2 text-sm cursor-pointer">
                   <Settings className="h-4 w-4" /> Configurações
                 </DropdownMenuItem>
 
