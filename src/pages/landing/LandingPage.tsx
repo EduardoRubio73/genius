@@ -249,7 +249,7 @@ export default function LandingPage() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-logo-wrap">
-          <img src={logo} alt="Prompt Genius SaaS Builder" className="hero-logo" />
+          <img alt="Prompt Genius SaaS Builder" className="hero-logo object-fill" src="/lovable-uploads/688355bf-1ebd-477f-a16a-4f11633d41d7.png" />
         </div>
         <div className="tag"><span className="tag-dot" />IA + SaaS Builder + Programa de Indicação</div>
         <h1>
