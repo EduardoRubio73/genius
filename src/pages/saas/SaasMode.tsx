@@ -101,6 +101,8 @@ export default function SaasMode() {
     }
   };
 
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -115,6 +117,14 @@ export default function SaasMode() {
 
     try {
       setStep("generating");
+
+      // Create session BEFORE calling edge function
+      const { data: sessionRecord, error: sessErr } = await supabase
+        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "saas" as const, tokens_total: 0 })
+        .select().single();
+      if (sessErr) throw sessErr;
+      const currentSessionId = sessionRecord.id;
+      setSessionId(currentSessionId);
 
       // Build a structured prompt from answers
       const prompt = `
@@ -142,6 +152,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
           },
           originalInput: answers.problema,
           destino: "lovable",
+          sessionId: currentSessionId,
         }),
       });
 
@@ -150,8 +161,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
       setSpecMarkdown(specData.spec_md || "");
 
       // Consume credit
-      const tempSessionId = crypto.randomUUID();
-      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: tempSessionId });
+      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: currentSessionId });
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
