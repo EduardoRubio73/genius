@@ -45,6 +45,7 @@ const MODE_TABS: { value: "all" | MemoryMode; label: string; icon: React.Element
   { value: "prompt", label: "Prompts", icon: Sparkles },
   { value: "saas", label: "Specs", icon: FileCode },
   { value: "mixed", label: "Misto", icon: Layers },
+  { value: "build", label: "Build", icon: Rocket },
 ];
 
 const FILTER_TABS = [
