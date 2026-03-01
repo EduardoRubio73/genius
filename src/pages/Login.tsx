@@ -32,7 +32,7 @@ export default function Login() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: window.location.origin }
         });
         if (error) throw error;
         toast({ title: "Conta criada!", description: "Verifique seu email para confirmar." });
@@ -52,8 +52,8 @@ export default function Login() {
     <div className="noise-overlay relative flex min-h-screen items-center justify-center px-4">
       <div className="relative z-10 w-full max-w-sm space-y-6">
         <div className="text-center">
-          <img src={logo} alt="Prompt Genius SaaS Builder" className="mx-auto mb-4 h-20 w-auto" />
-          <h1 className="font-heading text-2xl font-bold">Prompt Genius SaaS Builder</h1>
+          <img alt="Prompt Genius SaaS Builder" className="mx-auto mb-4 h-20 w-auto" src="/lovable-uploads/9b0fc4b1-5dd4-4555-bf73-60c2f50bf785.png" />
+          
           <p className="mt-1 text-sm text-muted-foreground">
             {isSignUp ? "Crie sua conta" : "Entre na sua conta"}
           </p>
@@ -71,8 +71,8 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="seu@email.com"
-            />
+              placeholder="seu@email.com" />
+
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
@@ -86,8 +86,8 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              placeholder="••••••"
-            />
+              placeholder="••••••" />
+
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Carregando..." : isSignUp ? "Criar conta" : "Entrar"}
@@ -99,12 +99,12 @@ export default function Login() {
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
-            className="font-medium text-primary hover:underline"
-          >
+            className="font-medium text-primary hover:underline">
+
             {isSignUp ? "Entrar" : "Criar conta"}
           </button>
         </p>
       </div>
-    </div>
-  );
+    </div>);
+
 }
