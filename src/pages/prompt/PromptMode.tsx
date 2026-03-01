@@ -165,13 +165,8 @@ export default function PromptMode() {
   const handleSave = useCallback(async () => {
     if (!orgId || !user || !fields) return;
     try {
-      const { data: session, error: sessErr } = await supabase
-        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "prompt" as const, tokens_total: 0 })
-        .select().single();
-      if (sessErr) throw sessErr;
-
       const { error: promptErr } = await supabase.from("prompt_memory").insert({
-        session_id: session.id, org_id: orgId, user_id: user.id,
+        session_id: sessionId, org_id: orgId, user_id: user.id,
         especialidade: fields.especialidade, persona: fields.persona,
         tarefa: fields.tarefa, objetivo: fields.objetivo, contexto: fields.contexto,
         destino, prompt_gerado: promptGerado, rating: promptRating || null, categoria: "prompt",
@@ -184,7 +179,7 @@ export default function PromptMode() {
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
     }
-  }, [orgId, user, fields, promptGerado, promptRating, destino]);
+  }, [orgId, user, fields, promptGerado, promptRating, destino, sessionId]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
