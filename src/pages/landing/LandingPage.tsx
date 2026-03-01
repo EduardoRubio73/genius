@@ -4,8 +4,8 @@ import logo from "@/assets/logo-landing.png";
 import "./landing.css";
 
 /* ── Terms & Privacy Content ── */
-const TERMS_CONTENT = (
-  <>
+const TERMS_CONTENT =
+<>
     <h2>Termos de Uso — Prompt Genius SaaS Builder</h2>
     <p><strong>Última atualização:</strong> 26 de fevereiro de 2026</p>
 
@@ -52,11 +52,11 @@ const TERMS_CONTENT = (
     <p>10.1. O Usuário pode cancelar a assinatura a qualquer momento pelo painel.</p>
     <p>10.2. O acesso permanece ativo até o fim do período pago.</p>
     <p>10.3. Cotas adicionais e de indicação permanecem na conta após o cancelamento.</p>
-  </>
-);
+  </>;
 
-const PRIVACY_CONTENT = (
-  <>
+
+const PRIVACY_CONTENT =
+<>
     <h2>Política de Privacidade — Prompt Genius SaaS Builder</h2>
     <p><strong>Última atualização:</strong> 26 de fevereiro de 2026</p>
 
@@ -92,15 +92,15 @@ const PRIVACY_CONTENT = (
 
     <h3>8. Contato</h3>
     <p>Para dúvidas ou solicitações relacionadas à privacidade, entre em contato: <strong>zragencyia@gmail.com</strong></p>
-  </>
-);
+  </>;
+
 
 /* ── Modal Component ── */
-function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+function Modal({ open, onClose, children }: {open: boolean;onClose: () => void;children: React.ReactNode;}) {
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
+    if (open) document.body.style.overflow = "hidden";else
+    document.body.style.overflow = "";
+    return () => {document.body.style.overflow = "";};
   }, [open]);
 
   if (!open) return null;
@@ -110,8 +110,8 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
         <button className="landing-modal-close" onClick={onClose}>✕</button>
         {children}
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 /* ── Contact Modal Content ── */
@@ -142,8 +142,8 @@ function ContactModalContent() {
         placeholder="Digite aqui sua dúvida..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        maxLength={1000}
-      />
+        maxLength={1000} />
+
       <div className="contact-actions">
         <button className="contact-btn contact-btn-email" onClick={handleEmail}>
           ✉️ Enviar por E-mail
@@ -152,8 +152,8 @@ function ContactModalContent() {
           💬 Enviar por WhatsApp
         </button>
       </div>
-    </>
-  );
+    </>);
+
 }
 
 /* ── Typewriter Hook ── */
@@ -194,20 +194,20 @@ function useTypewriter(words: string[], speed = 75, delSpeed = 38, pause = 1900)
   return text;
 }
 
-function TypeWriter({ words, className }: { words: string[]; className?: string }) {
+function TypeWriter({ words, className }: {words: string[];className?: string;}) {
   const text = useTypewriter(words);
   return <span className={className}>{text}<span style={{ display: "inline-block", width: 2, height: "1em", background: "var(--v)", marginLeft: 2, verticalAlign: "middle", animation: "blink .7s step-end infinite" }} /></span>;
 }
 
 /* ── FAQ Item ── */
-function FaqItem({ q, a }: { q: string; a: string }) {
+function FaqItem({ q, a }: {q: string;a: string;}) {
   const [open, setOpen] = useState(false);
   return (
     <div className={`fi ${open ? "open" : ""}`} onClick={() => setOpen(!open)}>
       <div className="fiq">{q}<span className="fii">+</span></div>
       <div className="fia" dangerouslySetInnerHTML={{ __html: a }} />
-    </div>
-  );
+    </div>);
+
 }
 
 /* ── Main Landing Page ── */
@@ -218,7 +218,7 @@ export default function LandingPage() {
   // Intersection Observer for reveal animations
   useEffect(() => {
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("vis"); }),
+      (entries) => entries.forEach((e) => {if (e.isIntersecting) e.target.classList.add("vis");}),
       { threshold: 0.1 }
     );
     document.querySelectorAll(".landing-page .rv").forEach((el) => obs.observe(el));
@@ -234,7 +234,7 @@ export default function LandingPage() {
       {/* NAV */}
       <nav>
         <a className="nav-logo" href="#">
-          <img src={logo} alt="Prompt Genius SaaS Builder" />
+          <img alt="Prompt Genius SaaS Builder" src="/lovable-uploads/a06a4c23-de16-4d60-a563-0ed4f968f538.png" />
           <span className="nav-name">Prompt Genius SaaS Builder</span>
         </a>
         <div className="nav-r">
@@ -577,6 +577,6 @@ export default function LandingPage() {
       <Modal open={modal === "contact"} onClose={() => setModal(null)}>
         <ContactModalContent />
       </Modal>
-    </div>
-  );
+    </div>);
+
 }
