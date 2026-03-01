@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { User, Lock, Bell, CreditCard, Upload, Save, ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
