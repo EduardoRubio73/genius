@@ -256,6 +256,7 @@ function BillingTab({ budget }: { budget: { consumed: number; limit_total: numbe
 
 // ── Main ──
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile, refetch } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
