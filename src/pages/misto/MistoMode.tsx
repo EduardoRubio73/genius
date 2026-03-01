@@ -159,14 +159,9 @@ export default function MistoMode() {
   const handleSave = useCallback(async () => {
     if (!orgId || !user || !fields) return;
     try {
-      const { data: session, error: sessErr } = await supabase
-        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "misto" as const, tokens_total: 0 })
-        .select().single();
-      if (sessErr) throw sessErr;
-
       const { data: promptRecord, error: promptErr } = await supabase
         .from("prompt_memory").insert({
-          session_id: session.id, org_id: orgId, user_id: user.id,
+          session_id: sessionId, org_id: orgId, user_id: user.id,
           especialidade: fields.especialidade, persona: fields.persona,
           tarefa: fields.tarefa, objetivo: fields.objetivo, contexto: fields.contexto,
           destino, prompt_gerado: promptGerado, rating: promptRating || null, categoria: "misto",
@@ -174,7 +169,7 @@ export default function MistoMode() {
       if (promptErr) throw promptErr;
 
       const { error: specErr } = await supabase.from("saas_specs").insert({
-        session_id: session.id, org_id: orgId, user_id: user.id,
+        session_id: sessionId, org_id: orgId, user_id: user.id,
         prompt_memory_id: promptRecord.id, spec_md: specMarkdown,
         rating: specRating || null, answers: { original_input: userInput, destino },
       });
@@ -186,7 +181,7 @@ export default function MistoMode() {
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
     }
-  }, [orgId, user, fields, promptGerado, specMarkdown, promptRating, specRating, userInput, destino]);
+  }, [orgId, user, fields, promptGerado, specMarkdown, promptRating, specRating, userInput, destino, sessionId]);
 
   const handleNewSession = () => {
     setStep("input"); setUserInput(""); setFields(null);
