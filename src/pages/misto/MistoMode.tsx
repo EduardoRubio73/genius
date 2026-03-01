@@ -73,6 +73,8 @@ export default function MistoMode() {
     };
   };
 
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   // Main generate flow
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) {
@@ -91,9 +93,18 @@ export default function MistoMode() {
 
     try {
       setStep("distributing");
+
+      // Create session BEFORE calling edge function
+      const { data: sessionRecord, error: sessErr } = await supabase
+        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "misto" as const, tokens_total: 0 })
+        .select().single();
+      if (sessErr) throw sessErr;
+      const currentSessionId = sessionRecord.id;
+      setSessionId(currentSessionId);
+
       const distributeRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
         method: "POST", headers,
-        body: JSON.stringify({ action: "distribute", freeText: userInput, destino }),
+        body: JSON.stringify({ action: "distribute", freeText: userInput, destino, sessionId: currentSessionId }),
       });
       if (!distributeRes.ok) throw new Error("Falha na distribuição");
       const distributeData = await distributeRes.json();
@@ -110,7 +121,7 @@ export default function MistoMode() {
       setStep("refining");
       const refineRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
         method: "POST", headers,
-        body: JSON.stringify({ action: "refine", fields: extractedFields, destino }),
+        body: JSON.stringify({ action: "refine", fields: extractedFields, destino, sessionId: currentSessionId }),
       });
       if (!refineRes.ok) throw new Error("Falha no refinamento");
       const refineData = await refineRes.json();
@@ -125,13 +136,12 @@ export default function MistoMode() {
       setFields(refinedFields);
       setPromptGerado(refineData.prompt_gerado || "");
 
-      const tempSessionId = crypto.randomUUID();
-      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: tempSessionId });
+      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: currentSessionId });
 
       setStep("generating-spec");
       const specRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
         method: "POST", headers,
-        body: JSON.stringify({ action: "saas-spec", promptFields: refinedFields, originalInput: userInput, destino }),
+        body: JSON.stringify({ action: "saas-spec", promptFields: refinedFields, originalInput: userInput, destino, sessionId: currentSessionId }),
       });
       if (!specRes.ok) throw new Error("Falha na geração da spec");
       const specData = await specRes.json();
