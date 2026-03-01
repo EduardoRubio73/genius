@@ -20,6 +20,7 @@ import AdminFlags from "./pages/admin/AdminFlags";
 import MistoMode from "./pages/misto/MistoMode";
 import PromptMode from "./pages/prompt/PromptMode";
 import SaasMode from "./pages/saas/SaasMode";
+import BuildMode from "./pages/build/BuildMode";
 import MemoryPage from "./pages/MemoryPage";
 import HistoryPage from "./pages/HistoryPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -54,6 +55,10 @@ const App = () => (
           <Route
             path="/misto"
             element={<AuthGuard><MistoMode /></AuthGuard>}
+          />
+          <Route
+            path="/build"
+            element={<AuthGuard><BuildMode /></AuthGuard>}
           />
           <Route
             path="/memory"

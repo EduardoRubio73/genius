@@ -1,4 +1,4 @@
-import { Sparkles, FileCode, Layers, Zap, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown } from "lucide-react";
+import { Sparkles, FileCode, Layers, Zap, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown, Rocket } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ModeCard } from "@/components/dashboard/ModeCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,6 +51,15 @@ const modes = [
     href: "/mixed",
     accentClass: "text-secondary",
     glowColor: "hsla(160, 100%, 45%, 0.15)",
+  },
+  {
+    title: "BUILD Engine",
+    description: "Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa.",
+    icon: Rocket,
+    tags: ["PRD", "SQL", "Deploy-ready"],
+    href: "/build",
+    accentClass: "text-primary",
+    glowColor: "hsla(254, 96%, 67%, 0.15)",
   },
 ] as const;
 
@@ -318,7 +327,7 @@ export default function Dashboard() {
             Escolha um modo para começar
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {modes.map((mode) => (
             <ModeCard key={mode.title} {...mode} />
           ))}
