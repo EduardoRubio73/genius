@@ -12,6 +12,7 @@ import {
   Sparkles,
   FileCode,
   Layers,
+  Rocket,
   Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ const MODE_TABS: { value: "all" | MemoryMode; label: string; icon: React.Element
   { value: "prompt", label: "Prompts", icon: Sparkles },
   { value: "saas", label: "Specs", icon: FileCode },
   { value: "mixed", label: "Misto", icon: Layers },
+  { value: "build", label: "Build", icon: Rocket },
 ];
 
 const FILTER_TABS = [
@@ -56,12 +58,14 @@ const TYPE_COLORS: Record<MemoryMode, string> = {
   prompt: "text-primary bg-primary/10 border-primary/20",
   saas: "text-accent bg-accent/10 border-accent/20",
   mixed: "text-secondary bg-secondary/10 border-secondary/20",
+  build: "text-orange-500 bg-orange-500/10 border-orange-500/20",
 };
 
 const TYPE_ICONS: Record<MemoryMode, React.ElementType> = {
   prompt: Sparkles,
   saas: FileCode,
   mixed: Layers,
+  build: Rocket,
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
