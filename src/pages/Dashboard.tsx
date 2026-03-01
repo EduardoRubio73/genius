@@ -52,6 +52,15 @@ const modes = [
     accentClass: "text-secondary",
     glowColor: "hsla(160, 100%, 45%, 0.15)",
   },
+  {
+    title: "BUILD Engine",
+    description: "Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa.",
+    icon: Rocket,
+    tags: ["PRD", "SQL", "Deploy-ready"],
+    href: "/build",
+    accentClass: "text-primary",
+    glowColor: "hsla(254, 96%, 67%, 0.15)",
+  },
 ] as const;
 
 // ── Sub-components ────────────────────────────────────────────────────────────

@@ -57,6 +57,10 @@ const App = () => (
             element={<AuthGuard><MistoMode /></AuthGuard>}
           />
           <Route
+            path="/build"
+            element={<AuthGuard><BuildMode /></AuthGuard>}
+          />
+          <Route
             path="/memory"
             element={<AuthGuard><MemoryPage /></AuthGuard>}
           />
