@@ -23,7 +23,7 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
         { role: "user", content: userPrompt },
       ],
       temperature: 0.7,
-      max_tokens: 4096,
+      max_tokens: 8192,
     }),
   });
 
