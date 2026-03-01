@@ -1,11 +1,13 @@
-import { Sparkles, FileCode, Layers, Zap, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown, Rocket } from "lucide-react";
+import { Sparkles, FileCode, Layers, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown, Rocket } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppShell } from "@/components/layout/AppShell";
 import { ModeCard } from "@/components/dashboard/ModeCard";
+import { QuotaCard } from "@/components/dashboard/QuotaCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useOrgStats, useTokenBudget } from "@/hooks/useOrgStats";
+import { useOrgStats } from "@/hooks/useOrgStats";
+import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -120,73 +122,7 @@ function StatCard({
   );
 }
 
-function UsageDetailCard({
-  consumed,
-  total,
-  loading,
-}: {
-  consumed: number;
-  total: number;
-  loading: boolean;
-}) {
-  const pct = total > 0 ? Math.min(100, Math.round((consumed / total) * 100)) : 0;
-  const remaining = Math.max(0, total - consumed);
-  const barColor =
-    pct >= 90 ? "bg-destructive" : pct >= 70 ? "bg-warning" : "bg-primary";
-
-  return (
-    <div className="glass-card p-5 col-span-full sm:col-span-2">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <Zap className="h-4 w-4" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Consumo do período</p>
-            {!loading && (
-              <p className="text-[11px] text-muted-foreground">{pct}% utilizado</p>
-            )}
-          </div>
-        </div>
-        {!loading && pct >= 80 && (
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-warning/10 text-warning border border-warning/20 uppercase tracking-wider">
-            Atenção
-          </span>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-5 w-40" />
-        </div>
-      ) : (
-        <>
-          {/* Bar */}
-          <div className="h-2.5 w-full rounded-full bg-border overflow-hidden mb-3">
-            <div
-              className={cn("h-full rounded-full transition-all duration-700", barColor)}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-
-          {/* Numbers */}
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-xl font-bold text-foreground tabular-nums">
-                {consumed.toLocaleString("pt-BR")}
-                <span className="text-sm font-normal text-muted-foreground ml-1">tokens usados</span>
-              </p>
-            </div>
-            <p className="text-sm text-muted-foreground tabular-nums">
-              <span className="text-foreground font-semibold">{remaining.toLocaleString("pt-BR")}</span> restantes
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+// Removed UsageDetailCard - replaced by QuotaCard
 
 function QuickActionCard({
   title,
@@ -226,11 +162,11 @@ export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
-  const { data: budget, isLoading: budgetLoading } = useTokenBudget(orgId);
+  const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
-  const isBudgetLoading = profileLoading || budgetLoading;
+  const isQuotaLoading = profileLoading || quotaLoading;
 
   const totalActions = (stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0);
   const avgRating = stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—";
@@ -306,10 +242,13 @@ export default function Dashboard() {
 
       {/* ── Usage + Quick actions ───────────────────────────────────────────── */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-8">
-        <UsageDetailCard
-          consumed={budget?.consumed ?? 0}
-          total={budget?.limit_total ?? 10000}
-          loading={isBudgetLoading}
+        <QuotaCard
+          planUsed={quota?.plan_used ?? 0}
+          planTotal={quota?.plan_total ?? 5}
+          bonusUsed={quota?.bonus_used ?? 0}
+          bonusTotal={quota?.bonus_total ?? 0}
+          totalRemaining={quota?.total_remaining ?? 0}
+          loading={isQuotaLoading}
         />
 
         {/* Quick actions: last session + memory */}

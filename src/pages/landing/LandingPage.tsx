@@ -320,8 +320,9 @@ export default function LandingPage() {
           <h2 className="sh">Três modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
           <div className="modes-grid">
             <div className="mc mc-p"><div className="mc-badge mb-pop">Mais usado</div><div className="mc-icon">✨</div><div className="mc-title">Gerador de Prompt</div><div className="mc-desc">Escreva sua ideia. A IA distribui em especialidade, persona, tarefa, objetivo e contexto. Copie o prompt pronto.</div><div className="mc-pill"><strong>1 cota</strong> por geração</div><div className="mc-n">01</div></div>
-            <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>1 cota</strong> por geração</div><div className="mc-n">02</div></div>
-            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos três modos.</div><div className="mc-pill"><strong>1 cota</strong> por sessão</div><div className="mc-n">03</div></div>
+            <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">02</div></div>
+            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos três modos.</div><div className="mc-pill"><strong>3 cotas</strong> por sessão</div><div className="mc-n">03</div></div>
+            <div className="mc mc-m"><div className="mc-badge mb-new">PRO 🚀</div><div className="mc-icon">⚙️</div><div className="mc-title">BUILD Engine</div><div className="mc-desc">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div><div className="mc-pill"><strong>5 cotas</strong> por projeto</div><div className="mc-n">04</div></div>
           </div>
         </div>
       </section>
@@ -431,7 +432,8 @@ export default function LandingPage() {
               <div className="pc-limits">
                 <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv">3 / mês</span></div>
                 <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv">1 / mês</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv">1 / mês</span></div>
+                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv">—</span></div>
+                <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv">—</span></div>
                 <div className="lrow"><span className="ll">📦 Total</span><span className="lv">5 / mês</span></div>
               </div>
               <ul className="pc-feats">
@@ -439,7 +441,7 @@ export default function LandingPage() {
                 <li>Código de indicação (+5 cotas)</li>
                 <li className="no">Few-shot learning</li>
                 <li className="no">Modo Misto</li>
-                <li className="no">Export Markdown</li>
+                <li className="no">BUILD Engine</li>
               </ul>
               <button className="pc-btn pc-btn-o" onClick={() => navigate("/login")}>Começar Grátis</button>
             </div>
@@ -474,16 +476,17 @@ export default function LandingPage() {
               <div className="pc-trial">✓ 7 dias grátis</div>
               <div className="pc-div" />
               <div className="pc-limits">
-                <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv v">60 / mês</span></div>
-                <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv v">30 / mês</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv v">30 / mês</span></div>
-                <div className="lrow"><span className="ll">📦 Total</span><span className="lv v">120 / mês</span></div>
+                <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className="lv v">60 / mês</span></div>
+                <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className="lv v">30 / mês</span></div>
+                <div className="lrow"><span className="ll">⚡ Modo Misto (3 cotas)</span><span className="lv v">30 / mês</span></div>
+                <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className="lv v">24 / mês</span></div>
+                <div className="lrow"><span className="ll">📦 Total</span><span className="lv v">120 cotas / mês</span></div>
               </div>
               <ul className="pc-feats">
                 <li>Tudo do Basic</li>
                 <li>Few-shot avançado</li>
                 <li>Modo Misto completo</li>
-                <li>Histórico + favoritos ilimitados</li>
+                <li>BUILD Engine completo</li>
                 <li>Suporte prioritário</li>
               </ul>
               <button className="pc-btn pc-btn-g" onClick={() => navigate("/login")}>Assinar Pro</button>
@@ -499,13 +502,14 @@ export default function LandingPage() {
                 <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv g">Ilimitado</span></div>
                 <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv g">Ilimitado</span></div>
                 <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv g">Ilimitado</span></div>
+                <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv g">Ilimitado</span></div>
                 <div className="lrow"><span className="ll">👥 Membros</span><span className="lv g">Até 10</span></div>
               </div>
               <ul className="pc-feats">
                 <li>Tudo do Pro</li>
                 <li>Multi-usuário (10 seats)</li>
                 <li>Admin dashboard</li>
-                <li>API access (em breve)</li>
+                <li>BUILD Engine ilimitado</li>
                 <li>Onboarding dedicado</li>
               </ul>
               <button className="pc-btn pc-btn-o" onClick={() => navigate("/login")}>Assinar Enterprise</button>
@@ -513,7 +517,7 @@ export default function LandingPage() {
           </div>
 
           <div className="cost-note rv" style={{ marginTop: 40 }}>
-            <strong>📊 Transparência de custos:</strong> usamos Gemini Flash (~R$0,0005/1k tokens). Um prompt consome ~700 tokens = <strong>R$0,00035</strong>. Um Modo Misto consome ~1.200 tokens = <strong>R$0,0006</strong>. O plano Pro (120 criações) nos custa ~<strong>R$0,05</strong>.
+            <strong>📊 Transparência de custos:</strong> Cada cota equivale a ~R$0,87 (pacote de 15). Um <strong>BUILD Engine</strong> (5 cotas ≈ R$4,35) substitui trabalho manual que custaria <strong>R$25–60</strong>. Um Prompt (1 cota ≈ R$0,87) substitui ~R$8 de trabalho manual.
           </div>
         </div>
       </section>
@@ -538,7 +542,7 @@ export default function LandingPage() {
           <h2 className="sh" style={{ margin: "0 auto" }}>Perguntas <TypeWriter words={["frequentes", "importantes", "respondidas"]} /></h2>
         </div>
         <div className="faq-wrap">
-          <FaqItem q='O que conta como uma "cota"?' a='Cada geração de IA consome 1 cota: 1 prompt = 1 cota, 1 spec = 1 cota, 1 sessão Modo Misto = 1 cota. Refinar texto <strong>não</strong> consome cota adicional.' />
+          <FaqItem q='O que conta como uma "cota"?' a='Cada ação consome cotas diferenciadas: <strong>Prompt = 1 cota</strong>, <strong>SaaS Spec = 2 cotas</strong>, <strong>Modo Misto = 3 cotas</strong>, <strong>BUILD Engine = 5 cotas</strong>. Refinar texto <strong>não</strong> consome cota adicional.' />
           <FaqItem q="As cotas adicionais realmente nunca expiram?" a="Sim. Cotas compradas e cotas ganhas por indicação são permanentes e se acumulam indefinidamente." />
           <FaqItem q="O que acontece quando o trial de 7 dias termina?" a="No dia 6 você recebe um aviso. No dia 8 a conta é bloqueada. Para retomar, assine qualquer plano ou compre cotas avulsas." />
           <FaqItem q="Tem limite de indicações?" a="Não. Você pode indicar quantas pessoas quiser. Cada indicação válida = 5 cotas permanentes para você e o indicado." />
