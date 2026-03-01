@@ -12,6 +12,7 @@ import {
   Sparkles,
   FileCode,
   Layers,
+  Rocket,
   Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
