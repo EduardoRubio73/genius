@@ -272,7 +272,10 @@ export default function ProfilePage() {
       avatarUrl={profile?.avatar_url}
       onSignOut={signOut}
     >
-      <section className="mb-6">
+      <section className="mb-6 flex items-center gap-3">
+        <button onClick={() => navigate("/dashboard")} className="rounded-lg p-2 hover:bg-muted transition-colors" aria-label="Voltar">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Minha conta</h1>
       </section>
 
