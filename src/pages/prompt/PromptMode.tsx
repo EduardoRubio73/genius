@@ -69,6 +69,8 @@ export default function PromptMode() {
     };
   };
 
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -84,12 +86,20 @@ export default function PromptMode() {
     try {
       setStep("generating");
 
+      // Create session BEFORE calling edge function
+      const { data: sessionRecord, error: sessErr } = await supabase
+        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "prompt" as const, tokens_total: 0 })
+        .select().single();
+      if (sessErr) throw sessErr;
+      const currentSessionId = sessionRecord.id;
+      setSessionId(currentSessionId);
+
       if (inputMode === "free") {
         // Distribute free text into fields
         setGenStatus("distributing");
         const distributeRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
           method: "POST", headers,
-          body: JSON.stringify({ action: "distribute", freeText, destino }),
+          body: JSON.stringify({ action: "distribute", freeText, destino, sessionId: currentSessionId }),
         });
         if (!distributeRes.ok) throw new Error("Falha na distribuição");
         const d = await distributeRes.json();
@@ -104,7 +114,7 @@ export default function PromptMode() {
         setGenStatus("refining");
         const refineRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
           method: "POST", headers,
-          body: JSON.stringify({ action: "refine", fields: extracted, destino }),
+          body: JSON.stringify({ action: "refine", fields: extracted, destino, sessionId: currentSessionId }),
         });
         if (!refineRes.ok) throw new Error("Falha no refinamento");
         const r = await refineRes.json();
@@ -124,7 +134,7 @@ export default function PromptMode() {
         setFields(manualFields);
         const refineRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
           method: "POST", headers,
-          body: JSON.stringify({ action: "refine", fields: manualFields, destino }),
+          body: JSON.stringify({ action: "refine", fields: manualFields, destino, sessionId: currentSessionId }),
         });
         if (!refineRes.ok) throw new Error("Falha no refinamento");
         const r = await refineRes.json();
@@ -141,8 +151,7 @@ export default function PromptMode() {
       }
 
       // Consume credit
-      const tempSessionId = crypto.randomUUID();
-      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: tempSessionId });
+      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: currentSessionId });
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
@@ -156,13 +165,8 @@ export default function PromptMode() {
   const handleSave = useCallback(async () => {
     if (!orgId || !user || !fields) return;
     try {
-      const { data: session, error: sessErr } = await supabase
-        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "prompt" as const, tokens_total: 0 })
-        .select().single();
-      if (sessErr) throw sessErr;
-
       const { error: promptErr } = await supabase.from("prompt_memory").insert({
-        session_id: session.id, org_id: orgId, user_id: user.id,
+        session_id: sessionId, org_id: orgId, user_id: user.id,
         especialidade: fields.especialidade, persona: fields.persona,
         tarefa: fields.tarefa, objetivo: fields.objetivo, contexto: fields.contexto,
         destino, prompt_gerado: promptGerado, rating: promptRating || null, categoria: "prompt",
@@ -175,12 +179,12 @@ export default function PromptMode() {
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
     }
-  }, [orgId, user, fields, promptGerado, promptRating, destino]);
+  }, [orgId, user, fields, promptGerado, promptRating, destino, sessionId]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
     setManualFields({ especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "" });
-    setPromptGerado(""); setPromptRating(0); setIsSaved(false); setTimeElapsed(0);
+    setPromptGerado(""); setPromptRating(0); setIsSaved(false); setTimeElapsed(0); setSessionId(null);
   };
 
   const isGenerating = step === "generating";
