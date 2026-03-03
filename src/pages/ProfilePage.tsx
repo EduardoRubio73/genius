@@ -431,6 +431,7 @@ export default function ProfilePage() {
   const { data: profile, refetch } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const activeTab = (searchParams.get("tab") as TabKey) || "profile";
   const setTab = (tab: TabKey) => setSearchParams({ tab });
