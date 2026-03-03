@@ -8,8 +8,9 @@ interface ModeCardProps {
   icon: LucideIcon;
   tags: readonly string[];
   href: string;
-  accentClass: string; // tailwind text color class using semantic tokens
-  glowColor: string; // HSL string for glow shadow
+  accentClass: string;
+  glowColor: string;
+  disabled?: boolean;
 }
 
 export function ModeCard({ title, description, icon: Icon, tags, href, accentClass, glowColor }: ModeCardProps) {
