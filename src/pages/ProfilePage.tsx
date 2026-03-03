@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save } from "lucide-react";
+import { User, Lock, Bell, CreditCard, Upload, Save, Check, X, ExternalLink } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useTokenBudget } from "@/hooks/useOrgStats";
+import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -65,7 +66,6 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
 
   return (
     <div className="space-y-6 max-w-lg">
-      {/* Avatar */}
       <div className="flex items-center gap-4">
         <button onClick={() => fileRef.current?.click()} className="relative group">
           <Avatar className="h-20 w-20 border-2 border-border">
@@ -83,7 +83,6 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
         </div>
       </div>
 
-      {/* Name */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
           <Label htmlFor="fullName">Nome completo</Label>
@@ -92,7 +91,6 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
         <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
       </div>
 
-      {/* Email readonly */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
           <Label>E-mail</Label>
@@ -169,7 +167,7 @@ function NotificationsTab() {
 
   const items = [
     { key: "weeklyDigest" as const, label: "Resumo semanal por e-mail", desc: "Receba um resumo das suas atividades toda semana", tip: "Enviado toda segunda-feira com métricas de uso, prompts e specs da semana." },
-    { key: "usageAlerts" as const, label: "Alertas de consumo (80%)", desc: "Aviso quando atingir 80% do limite de tokens", tip: "Notificação por e-mail quando seu consumo de tokens atingir 80% do limite." },
+    { key: "usageAlerts" as const, label: "Alertas de consumo (80%)", desc: "Aviso quando atingir 80% do limite de cotas", tip: "Notificação por e-mail quando seu consumo de cotas atingir 80% do limite." },
     { key: "productNews" as const, label: "Novidades do produto", desc: "Receba atualizações sobre novas funcionalidades", tip: "Newsletter mensal com novas features, dicas e melhorias da plataforma." },
     { key: "sessionComplete" as const, label: "Sessão longa concluída", desc: "Notificação ao concluir sessões demoradas", tip: "Alerta quando uma sessão de geração que demorou mais de 30s for finalizada." },
   ];
@@ -199,56 +197,229 @@ function NotificationsTab() {
 }
 
 // ── Billing Tab ──
-function BillingTab({ budget }: { budget: { consumed: number; limit_total: number } | null }) {
-  const consumed = budget?.consumed ?? 0;
-  const total = budget?.limit_total ?? 10000;
-  const pct = total > 0 ? Math.min(100, Math.round((consumed / total) * 100)) : 0;
-  const barColor = pct >= 90 ? "bg-destructive" : pct >= 70 ? "bg-warning" : "bg-primary";
+interface BillingProduct {
+  id: string;
+  display_name: string | null;
+  plan_tier: string;
+  is_featured: boolean;
+  total_quotas_label: string | null;
+  prompts_label: string | null;
+  prompts_detail: string | null;
+  saas_specs_label: string | null;
+  saas_specs_detail: string | null;
+  misto_label: string | null;
+  misto_detail: string | null;
+  build_label: string | null;
+  build_detail: string | null;
+  members_label: string | null;
+  trial_label: string | null;
+  period_label: string | null;
+  cta_label: string | null;
+  stripe_payment_link: string | null;
+  sort_order: number;
+  unit_amount: number | null;
+}
 
-  const plans = [
-    { name: "Free", price: "R$ 0", credits: "5 cotas/mês", current: true },
-    { name: "Pro", price: "R$ 49/mês", credits: "120 cotas/mês", current: false },
-    { name: "Enterprise", price: "Sob consulta", credits: "Ilimitado", current: false },
-  ];
+function useBillingProducts() {
+  return useQuery({
+    queryKey: ["billing-products-profile"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("billing_products")
+        .select(`
+          id, display_name, plan_tier, is_featured, sort_order,
+          total_quotas_label, prompts_label, prompts_detail,
+          saas_specs_label, saas_specs_detail, misto_label, misto_detail,
+          build_label, build_detail, members_label,
+          trial_label, period_label, cta_label, stripe_payment_link,
+          billing_prices(unit_amount)
+        `)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((p: any) => ({
+        ...p,
+        unit_amount: p.billing_prices?.[0]?.unit_amount ?? null,
+        billing_prices: undefined,
+      })) as BillingProduct[];
+    },
+  });
+}
+
+function BillingTab({ orgId }: { orgId: string | undefined }) {
+  const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
+  const { data: products, isLoading: productsLoading } = useBillingProducts();
+
+  // Get org plan_tier
+  const { data: org } = useQuery({
+    queryKey: ["org-plan-tier", orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("plan_tier")
+        .eq("id", orgId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+  });
+
+  const currentTier = org?.plan_tier ?? "free";
+
+  // Quota bars
+  const planUsed = quota?.plan_used ?? 0;
+  const planTotal = quota?.plan_total ?? 0;
+  const planPct = planTotal > 0 ? Math.min(100, Math.round((planUsed / planTotal) * 100)) : 0;
+
+  const bonusUsed = quota?.bonus_used ?? 0;
+  const bonusTotal = quota?.bonus_total ?? 0;
+  const bonusPct = bonusTotal > 0 ? Math.min(100, Math.round((bonusUsed / bonusTotal) * 100)) : 0;
+
+  const barColor = (pct: number) =>
+    pct >= 90 ? "bg-destructive" : pct >= 70 ? "bg-yellow-500" : "bg-primary";
+
+  const featureRow = (label: string | null, detail: string | null) => {
+    if (!label) return null;
+    return (
+      <div className="flex items-start gap-2 text-sm">
+        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <div>
+          <span className="text-foreground font-medium">{label}</span>
+          {detail && <span className="text-muted-foreground ml-1">— {detail}</span>}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
-      {/* Usage bar */}
-      <div className="rounded-xl border border-border/60 p-5 max-w-lg">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Consumo atual</p>
-        <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
-          <div className={cn("h-full rounded-full transition-all", barColor)} style={{ width: `${pct}%` }} />
+      {/* Quota bars */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+        <div className="rounded-xl border border-border/60 p-5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Cotas do Plano
+          </p>
+          {quotaLoading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <>
+              <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
+                <div className={cn("h-full rounded-full transition-all", barColor(planPct))} style={{ width: `${planPct}%` }} />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                <span className="text-foreground font-semibold">{planUsed}</span> / {planTotal} cotas usadas ({planPct}%)
+              </p>
+              {quota?.reset_at && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Renova em {new Date(quota.reset_at).toLocaleDateString("pt-BR")}
+                </p>
+              )}
+            </>
+          )}
         </div>
-        <p className="text-sm text-muted-foreground">
-          <span className="text-foreground font-semibold">{consumed.toLocaleString("pt-BR")}</span> / {total.toLocaleString("pt-BR")} tokens ({pct}%)
-        </p>
+
+        <div className="rounded-xl border border-border/60 p-5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Cotas Bônus
+          </p>
+          {quotaLoading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <>
+              <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
+                <div className={cn("h-full rounded-full transition-all", bonusTotal > 0 ? barColor(bonusPct) : "bg-muted")} style={{ width: `${bonusPct}%` }} />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                <span className="text-foreground font-semibold">{bonusUsed}</span> / {bonusTotal} bônus usadas ({bonusPct}%)
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Cotas bônus não expiram</p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Plans */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 max-w-3xl">
-        {plans.map((plan) => (
-          <div
-            key={plan.name}
-            className={cn(
-              "rounded-xl border p-5 transition-colors",
-              plan.current ? "border-primary bg-primary/5" : "border-border/60 bg-card/50"
-            )}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
-              {plan.current && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">Atual</span>
-              )}
-            </div>
-            <p className="text-2xl font-bold text-foreground mb-1">{plan.price}</p>
-            <p className="text-xs text-muted-foreground mb-4">{plan.credits}</p>
-            {!plan.current && (
-              <button className="w-full rounded-lg border border-primary bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
-                Upgrade
-              </button>
-            )}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-4">Planos disponíveis</h2>
+        {productsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-72 w-full rounded-xl" />)}
           </div>
-        ))}
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 max-w-4xl">
+            {(products ?? []).map((plan) => {
+              const isCurrent = plan.plan_tier === currentTier;
+              const priceDisplay = plan.unit_amount != null
+                ? `R$ ${(plan.unit_amount / 100).toFixed(0)}`
+                : "Sob consulta";
+
+              return (
+                <div
+                  key={plan.id}
+                  className={cn(
+                    "rounded-xl border p-5 transition-colors flex flex-col",
+                    isCurrent ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border/60 bg-card/50",
+                    plan.is_featured && !isCurrent && "border-primary/40"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-bold text-foreground">{plan.display_name ?? plan.id}</h3>
+                    {isCurrent && (
+                      <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">
+                        Atual
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-2xl font-bold text-foreground">{priceDisplay}</p>
+                  {plan.period_label && (
+                    <p className="text-xs text-muted-foreground mb-1">{plan.period_label}</p>
+                  )}
+                  {plan.trial_label && (
+                    <p className="text-xs text-primary font-medium mb-3">{plan.trial_label}</p>
+                  )}
+
+                  {plan.total_quotas_label && (
+                    <p className="text-sm font-semibold text-foreground mb-3 mt-2">
+                      {plan.total_quotas_label}
+                    </p>
+                  )}
+
+                  <div className="space-y-2 flex-1 mb-4">
+                    {featureRow(plan.prompts_label, plan.prompts_detail)}
+                    {featureRow(plan.saas_specs_label, plan.saas_specs_detail)}
+                    {featureRow(plan.misto_label, plan.misto_detail)}
+                    {featureRow(plan.build_label, plan.build_detail)}
+                    {featureRow(plan.members_label, null)}
+                  </div>
+
+                  {isCurrent ? (
+                    <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
+                      Plano atual
+                    </div>
+                  ) : plan.stripe_payment_link ? (
+                    <a
+                      href={plan.stripe_payment_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-1.5"
+                    >
+                      {plan.cta_label ?? "Upgrade"} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-center text-xs font-medium text-muted-foreground cursor-not-allowed"
+                    >
+                      {plan.cta_label ?? "Entrar em contato"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -259,7 +430,6 @@ export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const { data: profile, refetch } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
-  const { data: budget } = useTokenBudget(orgId);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const activeTab = (searchParams.get("tab") as TabKey) || "profile";
@@ -277,7 +447,6 @@ export default function ProfilePage() {
       </section>
 
       <div className="flex flex-col gap-6 sm:flex-row">
-        {/* Sidebar tabs */}
         <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -298,14 +467,13 @@ export default function ProfilePage() {
           })}
         </nav>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           {activeTab === "profile" && user && (
             <ProfileTab userId={user.id} profile={profile} onRefresh={() => refetch()} />
           )}
           {activeTab === "security" && <SecurityTab />}
           {activeTab === "notifications" && <NotificationsTab />}
-          {activeTab === "billing" && <BillingTab budget={budget ?? null} />}
+          {activeTab === "billing" && <BillingTab orgId={orgId} />}
         </div>
       </div>
     </AppShell>
