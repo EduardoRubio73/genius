@@ -421,12 +421,12 @@
   color: #fff; white-space: nowrap;
 }
 .landing-page .pc-name {
-  font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--mu); margin-bottom: 6px; margin-top: 6px;
+  font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--c); margin-bottom: 10px; margin-top: 6px;
 }
-.landing-page .pc-price { font-size: 38px; font-weight: 800; line-height: 1; }
-.landing-page .pc-price sup { font-size: 17px; vertical-align: top; margin-top: 8px; }
-.landing-page .pc-period { font-size: 12.5px; color: var(--mu); margin-bottom: 4px; }
+.landing-page .pc-price { font-size: 38px; font-weight: 800; line-height: 1.1; margin-bottom: 4px; }
+.landing-page .pc-price sup { font-size: 15px; vertical-align: top; margin-top: 6px; display: inline-block; margin-right: 2px; }
+.landing-page .pc-period { font-size: 12.5px; color: var(--mu); margin-top: 2px; margin-bottom: 8px; }
 .landing-page .pc-trial {
   display: inline-block; padding: 2px 9px; border-radius: 8px;
   background: rgba(0,229,176,.1); color: var(--g);
