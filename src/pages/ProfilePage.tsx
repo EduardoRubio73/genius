@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, ExternalLink, LayoutDashboard } from "lucide-react";
+import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -215,7 +216,7 @@ interface BillingProduct {
   trial_label: string | null;
   period_label: string | null;
   cta_label: string | null;
-  stripe_payment_link: string | null;
+  stripe_price_id: string | null;
   sort_order: number;
   unit_amount: number | null;
 }
@@ -231,7 +232,7 @@ function useBillingProducts() {
           total_quotas_label, prompts_label, prompts_detail,
           saas_specs_label, saas_specs_detail, misto_label, misto_detail,
           build_label, build_detail, members_label,
-          trial_label, period_label, cta_label, stripe_payment_link,
+          trial_label, period_label, cta_label, stripe_price_id,
           billing_prices(unit_amount)
         `)
         .eq("is_active", true)
@@ -249,6 +250,24 @@ function useBillingProducts() {
 function BillingTab({ orgId }: { orgId: string | undefined }) {
   const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
   const { data: products, isLoading: productsLoading } = useBillingProducts();
+
+  const subscribe = async (priceId: string) => {
+    const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+      body: { price_id: priceId },
+    });
+
+    if (error) {
+      toast.error("Não foi possível iniciar a assinatura.");
+      return;
+    }
+
+    if (data?.url) {
+      window.location.href = data.url;
+      return;
+    }
+
+    toast.error("Não foi possível redirecionar para o checkout.");
+  };
 
   // Get org plan_tier
   const { data: org } = useQuery({
@@ -418,24 +437,14 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                     <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
                       Plano atual
                     </div>
-                  ) : plan.stripe_payment_link ? (
-                    <a
-                      href={plan.stripe_payment_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-1.5"
-                    >
-                      {plan.cta_label ?? "Upgrade"} <ExternalLink className="h-3 w-3" />
-                    </a>
                   ) : (
-                    <a
-                      href={`https://wa.me/5515998034648?text=${encodeURIComponent("Venho atraves da página Prompt Genius SaaS Builder e gostaria de informações sobre o plano " + (plan.display_name ?? plan.id))}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-1.5"
+                    <Button
+                      onClick={() => subscribe(plan.stripe_price_id ?? "")}
+                      disabled={!plan.stripe_price_id}
+                      className="w-full"
                     >
-                      {plan.cta_label ?? "Falar com consultor"} <ExternalLink className="h-3 w-3" />
-                    </a>
+                      Assinar
+                    </Button>
                   )}
                 </div>
               );
