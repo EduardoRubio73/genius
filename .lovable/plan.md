@@ -1,95 +1,96 @@
 
 
-## Plan: Full Admin CRUD Overhaul
+## Plan: Redesign Admin Panel to Match HTML V2 Reference
 
-This is a large-scope upgrade to transform the admin panel from read-only dashboards into a full CRUD management system.
+The uploaded HTML file defines a polished admin design system with specific typography (Plus Jakarta Sans + JetBrains Mono), CSS variables for dark/light themes, larger spacing, rounded-14px table cards, styled badges, a modal with meta-grid layout, and code-boxes for long text. The current React admin uses smaller fonts, tighter spacing, and a different visual language.
 
-### Database Changes
+### Design Token Differences (HTML vs Current)
 
-**1. Add `stripe_payment_link` column to `billing_products`**
-```sql
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS stripe_payment_link text;
-```
+| Element | HTML Reference | Current React |
+|---------|---------------|---------------|
+| Font | Plus Jakarta Sans | Outfit |
+| Mono font | JetBrains Mono | IBM Plex Mono |
+| Background | `#0d0d12` | `#09090E` |
+| Surface | `#16161e` | `#0F0F17` |
+| Surface2 | `#1c1c26` | `#16161F` |
+| Border | `#2a2a3a` | `white/[0.06]` |
+| Accent | `#f05a28` | `#F97316` (orange-500) |
+| Table card | `border-radius:14px` | `rounded-[10px]` |
+| Table header bg | `var(--surface2)` | transparent |
+| Row padding | `16px` | `py-3 px-5` (12/20px) |
+| Page title | `24px font-weight:800` | `text-lg font-semibold` |
+| Badge style | `4px 10px, radius:7px, font-weight:700` | smaller, thinner |
+| Modal | `660px, radius:18px, sticky header` | `max-w-2xl` dialog |
+| Pagination | bottom of table-card, inline | separate div below |
+| Sidebar user | gradient avatar + name/role | dot + name/role |
+| Tab style | solid accent bg on active | semi-transparent bg |
 
-**2. Add admin RLS policies for write access**
-Currently `billing_products` and `billing_prices` only allow SELECT. Need INSERT/UPDATE/DELETE policies for super_admin on both tables. Also need admin write policies on `organizations` and `profiles` for user management.
+### Changes
 
-```sql
--- billing_products: admin full CRUD
-CREATE POLICY "admin_products_all" ON public.billing_products FOR ALL TO authenticated
-  USING (is_super_admin()) WITH CHECK (is_super_admin());
+**1. Create admin CSS file: `src/pages/admin/admin.css`**
+- Define CSS custom properties matching the HTML reference (`--bg`, `--surface`, `--surface2`, `--border`, `--accent`, etc.)
+- Import Plus Jakarta Sans + JetBrains Mono from Google Fonts
+- Define reusable classes: `.table-card`, `.badge`, `.meta-grid`, `.meta-lbl`, `.meta-val`, `.code-box`, `.pag`, `.tabs .tab`, `.filter-input`, `.page-title`
+- Include row animation keyframes
 
--- billing_prices: admin full CRUD  
-CREATE POLICY "admin_prices_all" ON public.billing_prices FOR ALL TO authenticated
-  USING (is_super_admin()) WITH CHECK (is_super_admin());
+**2. Rewrite `AdminLayout.tsx`**
+- Apply new design tokens: `--bg` for body, `--surface` for sidebar/topbar
+- Sidebar: 230px width, gradient avatar circle (instead of dot), show user name + "superadmin" role below
+- Topbar: 60px height, breadcrumb with `bc-sep` style, search pill (not button)
+- Nav items: 14px font, 9px border-radius, accent-soft bg on active
+- Content area: 28px 32px padding
 
--- profiles: admin can update any profile
-CREATE POLICY "admin_profiles_update" ON public.profiles FOR UPDATE TO authenticated
-  USING (is_super_admin());
+**3. Update `AdminOverview.tsx`**
+- Apply `.table-card` class (14px radius, surface bg, border)
+- KPI cards: use `--surface` bg, `--border` border, larger text
+- Tables: add `--surface2` header bg, larger row padding
 
--- profiles: admin can select all
-CREATE POLICY "admin_profiles_select" ON public.profiles FOR SELECT TO authenticated
-  USING (is_super_admin());
+**4. Update `AdminUsers.tsx`**
+- Page title: `<h1 class="page-title">` (24px/800)
+- Search: use `.filter-input` pattern (surface bg, border, icon + input)
+- Table: `.table-card` wrapper, surface2 header, 16px cell padding
+- Pagination: inside table-card bottom area (`.pag` pattern)
+- User detail modal: use `.meta-grid` layout for info tab, `.code-box` for long text
 
--- organizations: admin can update any org
-CREATE POLICY "admin_orgs_update" ON public.organizations FOR UPDATE TO authenticated
-  USING (is_super_admin());
+**5. Update `AdminPrompts.tsx`**
+- Tabs: solid accent bg on active tab (`.tab.active { background: var(--accent); color: white }`)
+- Table: same `.table-card` treatment
+- Badges: destination badges use `.badge.lovable` (purple-soft) and `.badge.chatgpt` (green-soft)
+- Rating: orange circle (`.rating-num`) when present
+- Detail modal: `.meta-grid` for metadata, `.code-box` for contexto/prompt_gerado sections
+- Export button: `.btn-outline` style with icon
 
--- organizations: admin can select all
-CREATE POLICY "admin_orgs_select" ON public.organizations FOR SELECT TO authenticated
-  USING (is_super_admin());
-```
+**6. Update `AdminBilling.tsx`**
+- Same table-card, tabs, filter-input patterns
+- Larger row padding, surface2 header
 
-### Frontend Changes
+**7. Update `AdminAIConfig.tsx`**
+- Same design treatment for settings list and model configs table
 
-**1. AdminBilling.tsx — Full rewrite with 3 tabs**
-- **Planos (Products)**: List all `billing_products` with toggle active/inactive, edit dialog (display_name, features, labels, stripe_payment_link, cta_label, etc.), create new product
-- **Preços (Prices)**: List `billing_prices`, edit unit_amount, toggle active, link to product
-- **Assinaturas**: Keep existing subscriptions + invoices view
+**8. Update `AdminFlags.tsx`**
+- Same card/list styling with new border-radius and spacing
 
-**2. AdminUsers.tsx — CRUD upgrade**
-- Click row → open detail dialog showing all user info (profile, org, plan, credits, prompts count, specs count, sessions)
-- Edit button: update full_name, email, plan_tier, account_status, is_active, credits (plan_credits_total, bonus_credits_total)
-- Deactivate/reactivate org toggle
-- View credit transactions history for that user/org
+**9. Update `AdminAuditLogs.tsx`**
+- Same table-card pattern, surface2 headers
 
-**3. AdminPrompts.tsx — Detail dialog on row click**
-- Click any prompt row → open a detail dialog showing ALL fields: especialidade, persona, tarefa, objetivo, contexto, formato, restricoes, referencias, prompt_gerado (full text), rating, rating_comment, tags, tokens_consumed, destino, session_mode, created_at
-- Add tab or toggle to also show SaaS Specs (from `admin_saas_specs_overview`) with: project_name, stack_frontend, stack_backend, stack_database, revenue_model, answers, spec_md, rating
-- Delete prompt/spec action
+**10. Update `Badges.tsx`**
+- Match HTML badge style: `padding: 4px 10px`, `border-radius: 7px`, `font-size: 12px`, `font-weight: 700`
+- Add destination-specific variants: `.badge.lovable` (purple), `.badge.chatgpt` (green), `.badge.neutral`
 
-**4. AdminAIConfig.tsx — Add Model Configs CRUD**
-- Currently only manages `admin_settings` key-value pairs
-- Add a section for `admin_model_configs` table: list all models, toggle active/default, edit temperature/max_tokens/cost fields, create new model config
-
-**5. AdminFlags.tsx — Full CRUD**
-- Currently can only toggle existing flags
-- Add: create new flag (flag key, label, description, rollout_pct)
-- Edit existing flag details
-- Delete flag
-
-**6. New page: AdminOrganizations.tsx (optional, embedded in users)**
-- Manage orgs: view all orgs, edit plan_tier, credits, account_status, max_members
-
-### Files to Create/Edit
+### Files to Edit
 
 | File | Action |
 |------|--------|
-| Migration SQL | Add `stripe_payment_link` + admin RLS policies |
-| `src/pages/admin/AdminBilling.tsx` | Full rewrite: 3-tab CRUD for products, prices, subscriptions |
-| `src/pages/admin/AdminUsers.tsx` | Add detail/edit dialog, CRUD actions |
-| `src/pages/admin/AdminPrompts.tsx` | Add detail dialog with all fields, SaaS specs tab, delete |
-| `src/pages/admin/AdminAIConfig.tsx` | Add model configs CRUD section |
-| `src/pages/admin/AdminFlags.tsx` | Add create/edit/delete flag dialogs |
-| `src/hooks/admin/useAdminData.ts` | Add mutations for products, prices, users, prompts, model configs, flags CRUD |
-| `src/integrations/supabase/types.ts` | Auto-updated after migration |
+| `src/pages/admin/admin.css` | Create — design tokens + utility classes |
+| `src/pages/admin/AdminLayout.tsx` | Rewrite — new sidebar/topbar/content styling |
+| `src/pages/admin/AdminOverview.tsx` | Update — apply new design tokens |
+| `src/pages/admin/AdminUsers.tsx` | Update — table-card, meta-grid modal, pagination |
+| `src/pages/admin/AdminPrompts.tsx` | Update — tabs, table-card, badges, code-box modal |
+| `src/pages/admin/AdminBilling.tsx` | Update — same design treatment |
+| `src/pages/admin/AdminAIConfig.tsx` | Update — same design treatment |
+| `src/pages/admin/AdminFlags.tsx` | Update — same design treatment |
+| `src/pages/admin/AdminAuditLogs.tsx` | Update — same design treatment |
+| `src/components/admin/Badges.tsx` | Update — new badge sizing/variants |
 
-### Implementation Order
-1. Migration (schema + RLS policies)
-2. `useAdminData.ts` — add all missing mutations
-3. `AdminBilling.tsx` — products/prices CRUD with stripe_payment_link
-4. `AdminUsers.tsx` — detail dialog + edit
-5. `AdminPrompts.tsx` — detail dialog with all prompt/spec fields
-6. `AdminAIConfig.tsx` — model configs CRUD
-7. `AdminFlags.tsx` — create/edit/delete
+### No database changes required. This is purely a frontend UI redesign.
 
