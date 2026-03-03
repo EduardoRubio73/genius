@@ -318,6 +318,7 @@ export function useAdminPrices() {
       return (prices || []).map((p) => ({
         ...p,
         product_name: productMap.get(p.product_id)?.display_name || productMap.get(p.product_id)?.name || p.product_id,
+        product_is_active: productMap.get(p.product_id)?.is_active ?? false,
       }));
     },
   });
