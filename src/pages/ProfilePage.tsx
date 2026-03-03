@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, X, ExternalLink } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { User, Lock, Bell, CreditCard, Upload, Save, Check, X, ExternalLink, LayoutDashboard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
@@ -431,6 +431,7 @@ export default function ProfilePage() {
   const { data: profile, refetch } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const activeTab = (searchParams.get("tab") as TabKey) || "profile";
   const setTab = (tab: TabKey) => setSearchParams({ tab });
@@ -448,6 +449,13 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-6 sm:flex-row">
         <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LayoutDashboard className="h-4 w-4" /> Dashboard
+          </button>
+          <div className="border-b sm:border-b sm:my-1" />
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
