@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut, Settings, User, ChevronDown } from "lucide-react";
+import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
