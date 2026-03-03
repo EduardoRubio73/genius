@@ -63,8 +63,14 @@ function ProductsTab() {
   };
 
   const toggleActive = async (p: any) => {
-    try { await updateProduct.mutateAsync({ id: p.id, updates: { is_active: !p.is_active } }); toast({ title: p.is_active ? "Desativado" : "Ativado" }); }
-    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
+    const newActive = !p.is_active;
+    try {
+      await updateProduct.mutateAsync({ id: p.id, updates: { is_active: newActive } });
+      // Cascade: sync all prices for this product
+      const { error } = await supabase.from("billing_prices").update({ is_active: newActive }).eq("product_id", p.id);
+      if (error) console.error("Failed to cascade price status:", error);
+      toast({ title: newActive ? "Ativado" : "Desativado" });
+    } catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
   const fields = [
