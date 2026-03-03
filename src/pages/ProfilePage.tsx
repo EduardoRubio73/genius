@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, X, ExternalLink } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { User, Lock, Bell, CreditCard, Upload, Save, Check, X, ExternalLink, LayoutDashboard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
