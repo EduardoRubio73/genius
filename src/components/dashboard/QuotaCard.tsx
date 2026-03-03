@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
-import { Zap, Sparkles, FileCode, Layers, Rocket } from "lucide-react";
+import { Zap, Sparkles, FileCode, Layers, Rocket, Crown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 interface QuotaCardProps {
   planUsed: number;
