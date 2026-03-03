@@ -408,12 +408,14 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                       {plan.cta_label ?? "Upgrade"} <ExternalLink className="h-3 w-3" />
                     </a>
                   ) : (
-                    <button
-                      disabled
-                      className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-center text-xs font-medium text-muted-foreground cursor-not-allowed"
+                    <a
+                      href={`https://wa.me/5515998034648?text=${encodeURIComponent("Venho atraves da página Prompt Genius SaaS Builder e gostaria de informações sobre o plano " + (plan.display_name ?? plan.id))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-1.5"
                     >
-                      {plan.cta_label ?? "Entrar em contato"}
-                    </button>
+                      {plan.cta_label ?? "Falar com consultor"} <ExternalLink className="h-3 w-3" />
+                    </a>
                   )}
                 </div>
               );
