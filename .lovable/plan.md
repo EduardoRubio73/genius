@@ -1,15 +1,45 @@
 
 
-## Correção do layout dos cards de preços na Landing Page
+## Fix: Admin Credits Not Saving
 
-**Problema**: Os nomes dos planos e valores estão sobrepostos nos cards de preço. A `pc-name` tem fonte pequena (11px) com margens mínimas, e a `pc-price` tem `line-height: 1` sem espaçamento adequado entre nome → preço → período.
+### Root Causes
 
-**Correções em `src/pages/landing/landing.css`**:
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-1. **`.pc-name`**: Aumentar font-size para ~13px, adicionar `margin-bottom: 10px` para separar do preço
-2. **`.pc-price`**: Adicionar `margin-bottom: 4px` e `line-height: 1.1` para não colar no período
-3. **`.pc-price sup`**: Ajustar `display: inline-block` e `margin-right: 2px` para o "R$" não sobrepor o número
-4. **`.pc-period`**: Adicionar `margin-top: 2px` e `margin-bottom: 8px` para espaçar do trial badge
+### Solution
 
-Referência visual (imagem do usuário): nomes em destaque, "R$" como `<sup>` separado do número grande, "por mês" com espaço abaixo.
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
