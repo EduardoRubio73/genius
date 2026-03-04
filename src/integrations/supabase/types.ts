@@ -276,6 +276,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "audit_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
         ]
       }
       billing_invoices: {
@@ -361,6 +368,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "billing_invoices_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
+          {
             foreignKeyName: "billing_invoices_subscription_id_fkey"
             columns: ["subscription_id"]
             isOneToOne: false
@@ -434,7 +448,7 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "v_active_stripe_plans"
-            referencedColumns: ["product_id"]
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -513,7 +527,7 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "v_active_stripe_plans"
-            referencedColumns: ["product_id"]
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -723,6 +737,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "billing_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
+          {
             foreignKeyName: "billing_subscriptions_price_id_fkey"
             columns: ["price_id"]
             isOneToOne: false
@@ -735,13 +756,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "billing_prices"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "billing_subscriptions_price_id_fkey"
-            columns: ["price_id"]
-            isOneToOne: false
-            referencedRelation: "v_active_stripe_plans"
-            referencedColumns: ["price_id"]
           },
         ]
       }
@@ -839,6 +853,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "billing_token_usage_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
         ]
       }
       build_projects: {
@@ -922,6 +943,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "build_projects_session_id_fkey"
@@ -1048,6 +1076,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_purchases_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
+          {
             foreignKeyName: "credit_purchases_pack_id_fkey"
             columns: ["pack_id"]
             isOneToOne: false
@@ -1132,6 +1167,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "credit_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
         ]
       }
       org_credits: {
@@ -1185,6 +1227,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_credits_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
           },
         ]
       }
@@ -1251,6 +1300,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
           },
         ]
       }
@@ -1432,6 +1488,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_personal_org_id_fkey"
+            columns: ["personal_org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
         ]
       }
       prompt_memory: {
@@ -1547,6 +1610,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "prompt_memory_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
+          {
             foreignKeyName: "prompt_memory_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
@@ -1621,6 +1691,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_codes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
           },
         ]
       }
@@ -1710,6 +1787,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "referrals_invitee_org_id_fkey"
+            columns: ["invitee_org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
+          },
+          {
             foreignKeyName: "referrals_referrer_code_id_fkey"
             columns: ["referrer_code_id"]
             isOneToOne: false
@@ -1750,6 +1834,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_org_id_fkey"
+            columns: ["referrer_org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
           },
         ]
       }
@@ -1834,6 +1925,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saas_specs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
           },
           {
             foreignKeyName: "saas_specs_prompt_memory_id_fkey"
@@ -1927,6 +2025,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "v_user_plan_balance"
+            referencedColumns: ["org_id"]
           },
         ]
       }
@@ -2099,7 +2204,7 @@ export type Database = {
           subscription_status:
             | Database["public"]["Enums"]["subscription_status"]
             | null
-          time_remaining: unknown
+          time_remaining: string | null
           unit_amount: number | null
         }
         Relationships: []
@@ -2115,25 +2220,43 @@ export type Database = {
       }
       v_active_stripe_plans: {
         Row: {
-          credit_costs: Json | null
+          billing_interval: string | null
+          build_engine_cost_brl: number | null
+          build_engine_limit: number | null
+          credit_cost_display: string | null
           credit_unit_cost: number | null
           credits_limit: number | null
-          cta_label: string | null
-          description: string | null
+          currency: string | null
           display_name: string | null
-          features: Json | null
+          id: string | null
+          is_active: boolean | null
           is_featured: boolean | null
+          members_label: string | null
+          modo_misto_limit: number | null
           name: string | null
-          plan_tier: Database["public"]["Enums"]["plan_tier"] | null
-          price_active: boolean | null
-          price_id: string | null
-          product_active: boolean | null
-          product_id: string | null
-          recurring_interval: string | null
+          price_brl: number | null
+          prompt_cost_brl: number | null
+          prompts_limit: number | null
+          saas_specs_limit: number | null
           sort_order: number | null
           stripe_price_id: string | null
-          trial_period_days: number | null
-          unit_amount: number | null
+        }
+        Relationships: []
+      }
+      v_user_plan_balance: {
+        Row: {
+          credits_limit: number | null
+          credits_remaining: number | null
+          credits_used: number | null
+          current_period_end: string | null
+          org_id: string | null
+          org_name: string | null
+          percent_used: number | null
+          plan_name: string | null
+          plan_price: number | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
         }
         Relationships: []
       }

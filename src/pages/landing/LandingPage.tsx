@@ -238,6 +238,26 @@ export default function LandingPage() {
   const [modal, setModal] = useState<"terms" | "privacy" | "contact" | null>(null);
   const [pricingProducts, setPricingProducts] = useState<PricingProduct[]>([]);
 
+  const handleSubscribe = async (priceId: string | null) => {
+    if (!priceId) {
+      navigate("/login");
+      return;
+    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      window.location.href = "/login";
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+      body: { price_id: priceId },
+    });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    if (data?.url) window.location.href = data.url;
+  };
+
   useEffect(() => {
     async function fetchPricing() {
       const { data } = await supabase
@@ -511,7 +531,7 @@ export default function LandingPage() {
                       <li key={i} className={f.included ? "" : "no"}>{f.text}</li>
                     ))}
                   </ul>
-                  <button className={`pc-btn ${p.is_featured ? "pc-btn-g" : "pc-btn-o"}`} onClick={() => navigate("/login")}>{p.cta_label}</button>
+                  <button className={`pc-btn ${p.is_featured ? "pc-btn-g" : "pc-btn-o"}`} onClick={() => handleSubscribe(p.stripe_price_id)}>{p.cta_label}</button>
                 </div>
               );
             })}
