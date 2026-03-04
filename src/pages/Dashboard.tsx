@@ -274,6 +274,9 @@ export default function Dashboard() {
             accent="text-accent"
           />
         </div>
+
+        {/* Referral bonus card */}
+        <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} />
       </section>
 
       {/* ── Upgrade banner when quotas exhausted ──────────────────────────── */}
