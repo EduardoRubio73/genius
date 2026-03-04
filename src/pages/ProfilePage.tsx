@@ -204,24 +204,13 @@ interface BillingProduct {
   display_name: string | null;
   plan_tier: string;
   is_featured: boolean;
-  total_quotas_label: string | null;
-  prompts_label: string | null;
-  prompts_detail: string | null;
-  saas_specs_label: string | null;
-  saas_specs_detail: string | null;
-  misto_label: string | null;
-  misto_detail: string | null;
-  build_label: string | null;
-  build_detail: string | null;
-  members_label: string | null;
-  trial_label: string | null;
-  period_label: string | null;
-  cta_label: string | null;
-  billing_price_id: string | null;
-  stripe_price_id: string | null;
+  credits_limit: number;
   recurring_interval: string | null;
+  cta_label: string | null;
+  stripe_price_id: string | null;
   sort_order: number;
   unit_amount: number | null;
+  trial_period_days: number | null;
 }
 
 function useBillingProducts() {
@@ -239,24 +228,13 @@ function useBillingProducts() {
         display_name: p.display_name,
         plan_tier: p.plan_tier,
         is_featured: p.is_featured ?? false,
-        sort_order: p.sort_order || 0,
-        total_quotas_label: p.total_quotas_label ?? null,
-        prompts_label: p.prompts_label ?? null,
-        prompts_detail: p.prompts_detail ?? null,
-        saas_specs_label: p.saas_specs_label ?? null,
-        saas_specs_detail: p.saas_specs_detail ?? null,
-        misto_label: p.misto_label ?? null,
-        misto_detail: p.misto_detail ?? null,
-        build_label: p.build_label ?? null,
-        build_detail: p.build_detail ?? null,
-        members_label: p.members_label ?? null,
-        trial_label: p.trial_label ?? null,
-        period_label: p.period_label ?? p.recurring_interval,
+        credits_limit: p.credits_limit ?? 0,
+        recurring_interval: p.recurring_interval ?? null,
         cta_label: p.cta_label ?? "Assinar",
-        billing_price_id: p.price_id,
         stripe_price_id: p.stripe_price_id,
-        recurring_interval: p.recurring_interval,
+        sort_order: p.sort_order || 0,
         unit_amount: p.unit_amount,
+        trial_period_days: p.trial_period_days ?? null,
       })) as BillingProduct[];
     },
   });
@@ -313,14 +291,13 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   const barColor = (pct: number) =>
     pct >= 90 ? "bg-destructive" : pct >= 70 ? "bg-yellow-500" : "bg-primary";
 
-  const featureRow = (label: string | null, detail: string | null) => {
-    if (!label) return null;
+  const featureRow = (label: string, value: string) => {
     return (
       <div className="flex items-start gap-2 text-sm">
         <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
         <div>
           <span className="text-foreground font-medium">{label}</span>
-          {detail && <span className="text-muted-foreground ml-1">— {detail}</span>}
+          <span className="text-muted-foreground ml-1">— {value}</span>
         </div>
       </div>
     );
@@ -418,31 +395,36 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   <div className="mb-1">
                     <span className="text-sm text-muted-foreground align-top">R$</span>
                     <span className="text-4xl font-extrabold text-foreground ml-1 tracking-tight">
-                      {plan.unit_amount != null ? (plan.unit_amount / 100).toFixed(0) : "0"}
+                  {plan.unit_amount != null ? (plan.unit_amount / 100).toFixed(0) : "0"}
                     </span>
                   </div>
-                  {plan.period_label && (
-                    <p className="text-xs text-muted-foreground mb-1">{plan.period_label}</p>
-                  )}
-                  {plan.trial_label && (
-                    <p className="text-xs text-primary font-medium mb-4 mt-1 inline-flex items-center gap-1">
-                      <Check className="h-3 w-3" /> {plan.trial_label}
-                    </p>
-                  )}
+                  {(() => {
+                    const interval = plan.recurring_interval ?? "mês";
+                    const isUnlimited = plan.plan_tier === "enterprise";
+                    const cl = plan.credits_limit;
+                    const fmt = (cost: number) => isUnlimited ? "Ilimitado" : `${Math.floor(cl / cost)} / ${interval}`;
+                    return (
+                      <>
+                        <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
+                        {plan.trial_period_days && plan.trial_period_days > 0 && (
+                          <p className="text-xs text-primary font-medium mb-4 mt-1 inline-flex items-center gap-1">
+                            <Check className="h-3 w-3" /> {plan.trial_period_days} dias grátis
+                          </p>
+                        )}
 
-                  {plan.total_quotas_label && (
-                    <p className="text-sm font-semibold text-foreground mb-3 mt-2">
-                      {plan.total_quotas_label}
-                    </p>
-                  )}
+                        <p className="text-sm font-semibold text-foreground mb-3 mt-2">
+                          {isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`}
+                        </p>
 
-                  <div className="space-y-2 flex-1 mb-4">
-                    {featureRow(plan.prompts_label, plan.prompts_detail)}
-                    {featureRow(plan.saas_specs_label, plan.saas_specs_detail)}
-                    {featureRow(plan.misto_label, plan.misto_detail)}
-                    {featureRow(plan.build_label, plan.build_detail)}
-                    {featureRow(plan.members_label, null)}
-                  </div>
+                        <div className="space-y-2 flex-1 mb-4">
+                          {featureRow("✨ Prompts (1 cota)", fmt(1))}
+                          {featureRow("🏗️ SaaS Specs (2 cotas)", fmt(2))}
+                          {featureRow("⚡ Modo Misto (2 cotas)", fmt(2))}
+                          {featureRow("⚙️ BUILD Engine (5 cotas)", fmt(5))}
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {isCurrent ? (
                     <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
@@ -454,7 +436,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                       disabled={!plan.stripe_price_id}
                       className="w-full"
                     >
-                      Assinar
+                      {plan.cta_label ?? "Assinar"}
                     </Button>
                   )}
                 </div>

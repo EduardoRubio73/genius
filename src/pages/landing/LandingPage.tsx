@@ -8,22 +8,15 @@ interface PricingProduct {
   id: string;
   display_name: string | null;
   is_featured: boolean;
-  total_quotas_label: string | null;
-  prompts_label: string | null;
-  prompts_detail: string | null;
-  saas_specs_label: string | null;
-  saas_specs_detail: string | null;
-  misto_label: string | null;
-  misto_detail: string | null;
-  build_label: string | null;
-  build_detail: string | null;
-  members_label: string | null;
+  credits_limit: number;
+  plan_tier: string;
+  recurring_interval: string | null;
   features: { text: string; included: boolean }[];
-  trial_label: string | null;
-  period_label: string | null;
+  trial_period_days: number | null;
   cta_label: string | null;
   sort_order: number;
   unit_amount: number | null;
+  stripe_price_id: string | null;
 }
 
 /* ── Terms & Privacy Content ── */
@@ -255,22 +248,15 @@ export default function LandingPage() {
           id: p.product_id,
           display_name: p.display_name || p.name,
           is_featured: p.is_featured ?? false,
-          total_quotas_label: p.total_quotas_label ?? "—",
-          prompts_label: p.prompts_label ?? "—",
-          prompts_detail: p.prompts_detail ?? null,
-          saas_specs_label: p.saas_specs_label ?? "—",
-          saas_specs_detail: p.saas_specs_detail ?? null,
-          misto_label: p.misto_label ?? "—",
-          misto_detail: p.misto_detail ?? null,
-          build_label: p.build_label ?? "—",
-          build_detail: p.build_detail ?? null,
-          members_label: p.members_label ?? "—",
+          credits_limit: p.credits_limit ?? 0,
+          plan_tier: p.plan_tier ?? "free",
+          recurring_interval: p.recurring_interval ?? null,
           features: parsedFeatures(p.features),
-          trial_label: p.trial_label ?? null,
-          period_label: p.period_label ?? p.recurring_interval,
+          trial_period_days: p.trial_period_days ?? null,
           cta_label: p.cta_label ?? "Assinar",
           sort_order: p.sort_order || 0,
           unit_amount: p.unit_amount ?? null,
+          stripe_price_id: p.stripe_price_id ?? null,
         })));
       }
     }
@@ -487,6 +473,10 @@ export default function LandingPage() {
             {pricingProducts.map((p) => {
               const price = p.unit_amount != null ? Math.round(p.unit_amount / 100) : 0;
               const colorClass = p.is_featured ? "v" : p.sort_order === 3 ? "g" : p.sort_order === 1 ? "c" : "";
+              const isUnlimited = p.plan_tier === "enterprise";
+              const cl = p.credits_limit;
+              const interval = p.recurring_interval ?? "mês";
+              const fmt = (cost: number) => isUnlimited ? "Ilimitado" : `${Math.floor(cl / cost)} / ${interval}`;
               return (
                 <div key={p.id} className={`pc${p.is_featured ? " feat" : ""}`}>
                   {p.is_featured && <div className="pc-top-badge">⚡ Mais popular</div>}
@@ -494,22 +484,15 @@ export default function LandingPage() {
                   <div className="pc-price" style={p.is_featured ? { background: "linear-gradient(90deg,var(--c),var(--v))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" } : undefined}>
                     <sup>R$</sup>{price}
                   </div>
-                  <div className="pc-period">{p.period_label}</div>
-                  {p.trial_label && <div className="pc-trial">{p.trial_label}</div>}
+                  <div className="pc-period">por {interval}</div>
+                  {p.trial_period_days && p.trial_period_days > 0 && <div className="pc-trial">{p.trial_period_days} dias grátis</div>}
                   <div className="pc-div" />
                   <div className="pc-limits">
-                    <div className="lrow"><span className="ll">✨ Prompts {p.prompts_detail}</span><span className={`lv ${colorClass}`}>{p.prompts_label}</span></div>
-                    <div className="lrow"><span className="ll">🏗️ SaaS Specs {p.saas_specs_detail}</span><span className={`lv ${colorClass}`}>{p.saas_specs_label}</span></div>
-                    <div className="lrow"><span className="ll">⚡ Modo Misto {p.misto_detail}</span><span className={`lv ${colorClass}`}>{p.misto_label}</span></div>
-                    {p.build_label && p.build_label !== "—" ? (
-                      <div className="lrow"><span className="ll">⚙️ BUILD Engine {p.build_detail}</span><span className={`lv ${colorClass}`}>{p.build_label}</span></div>
-                    ) : (
-                      <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv">—</span></div>
-                    )}
-                    {p.members_label && (
-                      <div className="lrow"><span className="ll">👥 Membros</span><span className={`lv ${colorClass}`}>{p.members_label}</span></div>
-                    )}
-                    <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{p.total_quotas_label}</span></div>
+                    <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className={`lv ${colorClass}`}>{fmt(1)}</span></div>
+                    <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className={`lv ${colorClass}`}>{fmt(2)}</span></div>
+                    <div className="lrow"><span className="ll">⚡ Modo Misto (2 cotas)</span><span className={`lv ${colorClass}`}>{fmt(2)}</span></div>
+                    <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className={`lv ${colorClass}`}>{fmt(5)}</span></div>
+                    <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`}</span></div>
                   </div>
                   <ul className="pc-feats">
                     {p.features.map((f, i) => (
