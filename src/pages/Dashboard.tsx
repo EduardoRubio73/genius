@@ -10,6 +10,7 @@ import { useOrgStats } from "@/hooks/useOrgStats";
 import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import ReferralBonusCard from "@/components/referral/ReferralBonusCard";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -272,6 +273,9 @@ export default function Dashboard() {
             accent="text-accent"
           />
         </div>
+
+        {/* Referral bonus card */}
+        <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} />
       </section>
 
       {/* ── Upgrade banner when quotas exhausted ──────────────────────────── */}
