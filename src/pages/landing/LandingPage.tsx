@@ -511,7 +511,7 @@ export default function LandingPage() {
                       <li key={i} className={f.included ? "" : "no"}>{f.text}</li>
                     ))}
                   </ul>
-                  <button className={`pc-btn ${p.is_featured ? "pc-btn-g" : "pc-btn-o"}`} onClick={() => navigate("/login")}>{p.cta_label}</button>
+                  <button className={`pc-btn ${p.is_featured ? "pc-btn-g" : "pc-btn-o"}`} onClick={() => handleSubscribe(p.stripe_price_id)}>{p.cta_label}</button>
                 </div>
               );
             })}
