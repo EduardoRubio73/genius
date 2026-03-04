@@ -112,10 +112,23 @@ export default function AdminBillingPlans() {
 
   const syncStripe = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.functions.invoke("stripe-sync-products", { body: {} });
+      const { data, error } = await supabase.functions.invoke("stripe-sync-products", { body: {} });
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] });
+      const s = data?.summary;
+      toast({
+        title: "✅ Stripe sincronizado",
+        description: s
+          ? `Produtos: ${s.products_created} criados, ${s.products_updated} atualizados, ${s.products_recreated || 0} recriados. Preços: ${s.prices_created} criados, ${s.prices_recreated || 0} recriados.`
+          : "Sincronização concluída com sucesso.",
+      });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erro ao sincronizar Stripe", description: err.message, variant: "destructive" });
+    },
   });
 
   const openNew = () => { setEditing(null); setForm(emptyForm()); setOpen(true); };
