@@ -1,7 +1,11 @@
-import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard, Shield } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -28,6 +32,13 @@ export function AppShell({
 }: AppShellProps) {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.rpc("is_super_admin").then(({ data }) => setIsSuperAdmin(!!data));
+  }, [user]);
 
   const displayName = userName || (userEmail ? userEmail.split("@")[0] : "Usuário");
 
@@ -55,6 +66,16 @@ export function AppShell({
 
           {/* ── Right: Theme toggle + User menu ── */}
           <div className="flex items-center gap-2">
+
+            {/* Admin button (SuperAdmin only) */}
+            {isSuperAdmin && (
+              <Link to="/admin">
+                <Button variant="outline" size="sm" className="flex items-center gap-1.5 h-8 text-xs">
+                  <Shield className="h-3.5 w-3.5" />
+                  Admin
+                </Button>
+              </Link>
+            )}
 
             {/* Theme toggle */}
             <button
