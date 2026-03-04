@@ -1,45 +1,63 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Integrar Frontend com Edge Functions de Organização
 
-### Root Causes
+### Contexto
+Atualmente o frontend faz queries diretas ao Supabase (views, RPCs). O objetivo é centralizar em 4 Edge Functions que encapsulam a lógica de negócio no backend.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### 1. Criar 4 Edge Functions
 
-### Solution
+#### `supabase/functions/org-dashboard/index.ts`
+- Recebe `{ org_id }`, valida JWT via `getClaims()`
+- Retorna: plano atual, créditos (total/usados/restantes), bônus, último consumo, período, account_status
+- Fonte: `organizations` + `billing_subscriptions` + `billing_prices` + `billing_products` + `credit_transactions` (último registro)
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+#### `supabase/functions/org-usage/index.ts`
+- Recebe `{ org_id }`
+- Retorna: lista de `credit_transactions` ordenada por `created_at DESC`, limitada a 50
+- Fonte: `credit_transactions WHERE org_id = p_org_id`
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+#### `supabase/functions/org-subscription/index.ts`
+- Recebe `{ org_id }`
+- Retorna: status da assinatura, período atual (start/end), valor do plano, nome do plano, tier
+- Fonte: `billing_subscriptions` + `billing_prices` + `billing_products`
 
-### Files to Edit
+#### `supabase/functions/consume-credit/index.ts`
+- Recebe `{ org_id, user_id, session_id }`
+- Chama `consume_credit(p_org_id, p_user_id, p_session_id)` RPC via service_role
+- Retorna `{ success: true }` ou `{ error: "no_credits" | "trial_expired" | "suspended" }`
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+### 2. Registrar no `supabase/config.toml`
+Adicionar `verify_jwt = false` para as 4 novas funções (validação manual via `getClaims()`).
 
-### Details
+### 3. Atualizar `src/hooks/useQuotaBalance.ts`
+- Substituir queries diretas por `callEdgeFunction("org-dashboard", { org_id })`
+- Mapear resposta para a interface `QuotaBalance` existente
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+### 4. Atualizar consumo de crédito nos modos de execução
+Nos 4 arquivos que chamam `supabase.rpc("consume_credit", ...)`:
+- `src/pages/prompt/PromptMode.tsx`
+- `src/pages/misto/MistoMode.tsx`
+- `src/pages/saas/SaasMode.tsx`
+- `src/pages/build/BuildMode.tsx`
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+Substituir por `callEdgeFunction("consume-credit", { org_id, user_id, session_id })`.
+Se retornar `error === "no_credits"`, bloquear execução e mostrar `CreditModal`.
+
+Também substituir `fetchBalance` (que usa `supabase.rpc("get_credit_balance")`) por `callEdgeFunction("org-dashboard", { org_id })`.
+
+### 5. Arquivos alterados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `supabase/functions/org-dashboard/index.ts` | Criar |
+| `supabase/functions/org-usage/index.ts` | Criar |
+| `supabase/functions/org-subscription/index.ts` | Criar |
+| `supabase/functions/consume-credit/index.ts` | Criar |
+| `supabase/config.toml` | Registrar 4 funções |
+| `src/hooks/useQuotaBalance.ts` | Usar `org-dashboard` edge function |
+| `src/pages/prompt/PromptMode.tsx` | Usar `consume-credit` edge function |
+| `src/pages/misto/MistoMode.tsx` | Usar `consume-credit` edge function |
+| `src/pages/saas/SaasMode.tsx` | Usar `consume-credit` edge function |
+| `src/pages/build/BuildMode.tsx` | Usar `consume-credit` edge function + fetchBalance |
 
