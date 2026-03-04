@@ -1,62 +1,45 @@
 
 
-## Problema
+## Fix: Admin Credits Not Saving
 
-Ao abrir o formulário de edição, os campos **Trial days**, **Limite de créditos** e **Limite de membros** sempre mostram os valores padrão (0, 0, 1) porque o `openEdit` não busca esses dados. Eles estão armazenados no campo `metadata` (JSON) das tabelas `billing_products` e `billing_prices`, mas a view `v_active_stripe_plans` não os expõe.
+### Root Causes
 
-Dados confirmados no banco:
-- `billing_products.metadata`: `{"credits_limit": 5, "members_limit": 1, "trial_days": 7}` (Free)
-- `billing_prices.metadata`: similar; `trial_period_days` também existe como coluna
-- Alguns registros têm `metadata: null` (Starter, Pro)
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-Também falta a opção `day` no select de intervalo.
+### Solution
 
-## Solução
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-### 1. `openEdit` — buscar metadata do produto ao abrir
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-Quando o usuário clica em editar, fazer um fetch rápido de `billing_products` (para `is_featured`, `metadata`) e `billing_prices` (para `trial_period_days`, `metadata`) usando o `product_id` e `price_id` do row. Extrair `credits_limit`, `members_limit`, `trial_days` do metadata e popular o form.
+### Files to Edit
 
-### 2. Adicionar `day` ao select de intervalo
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-Adicionar `<option value="day">day</option>` e atualizar o tipo `recurring_interval` para incluir `"day"`.
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/admin/AdminBillingPlans.tsx` | `openEdit`: fetch de `billing_products` + `billing_prices` para preencher metadata; adicionar opção `day` no select de intervalo |
-
-### Detalhes
+### Details
 
 ```tsx
-// openEdit atualizado
-const openEdit = async (row: PlanRow) => {
-  setEditing(row);
-  // Buscar metadata do produto
-  const { data: prod } = await supabase.from("billing_products")
-    .select("is_featured, metadata").eq("id", row.product_id).single();
-  // Buscar metadata do preço
-  const { data: price } = row.price_id 
-    ? await supabase.from("billing_prices")
-        .select("trial_period_days, metadata").eq("id", row.price_id).single()
-    : { data: null };
-  
-  const prodMeta = (prod?.metadata as any) || {};
-  const priceMeta = (price?.metadata as any) || {};
-  
-  setForm({
-    ...formDefaults,
-    trial_days: price?.trial_period_days ?? priceMeta.trial_days ?? prodMeta.trial_days ?? 0,
-    credits_limit: prodMeta.credits_limit ?? priceMeta.credits_limit ?? 0,
-    members_limit: prodMeta.members_limit ?? priceMeta.members_limit ?? 1,
-    is_featured: prod?.is_featured ?? false,
-    is_active: row.product_active ?? true,
-  });
-  setOpen(true);
-};
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-// Intervalo: adicionar "day"
-<option value="day">day</option>
-<option value="month">month</option>
-<option value="year">year</option>
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
 

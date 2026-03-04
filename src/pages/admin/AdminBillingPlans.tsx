@@ -26,7 +26,7 @@ type PlanForm = {
   display_name: string;
   plan_tier: "free" | "starter" | "pro" | "enterprise";
   unit_amount_brl: string;
-  recurring_interval: "month" | "year";
+  recurring_interval: "day" | "month" | "year";
   sort_order: number;
   is_featured: boolean;
   trial_days: number;
@@ -132,20 +132,31 @@ export default function AdminBillingPlans() {
   });
 
   const openNew = () => { setEditing(null); setForm(emptyForm()); setOpen(true); };
-  const openEdit = (row: PlanRow) => {
+  const openEdit = async (row: PlanRow) => {
     setEditing(row);
+    // Fetch metadata from billing_products and billing_prices
+    const [prodRes, priceRes] = await Promise.all([
+      supabase.from("billing_products").select("is_featured, metadata").eq("id", row.product_id).single(),
+      row.price_id
+        ? supabase.from("billing_prices").select("trial_period_days, metadata").eq("id", row.price_id).single()
+        : Promise.resolve({ data: null }),
+    ]);
+    const prodMeta = (prodRes.data?.metadata as any) || {};
+    const priceMeta = (priceRes.data?.metadata as any) || {};
+    const trialDays = (priceRes.data as any)?.trial_period_days ?? priceMeta.trial_days ?? prodMeta.trial_days ?? 0;
+
     setForm({
       product_id: row.product_id,
       name: row.name || "",
       display_name: row.display_name || "",
       plan_tier: (row.plan_tier as PlanForm["plan_tier"]) || "starter",
       unit_amount_brl: row.unit_amount != null ? (row.unit_amount / 100).toString() : "",
-      recurring_interval: (row.recurring_interval as "month" | "year") || "month",
+      recurring_interval: (row.recurring_interval as "day" | "month" | "year") || "month",
       sort_order: row.sort_order ?? 0,
-      is_featured: false,
-      trial_days: 0,
-      credits_limit: 0,
-      members_limit: 1,
+      is_featured: prodRes.data?.is_featured ?? false,
+      trial_days: trialDays,
+      credits_limit: prodMeta.credits_limit ?? priceMeta.credits_limit ?? 0,
+      members_limit: prodMeta.members_limit ?? priceMeta.members_limit ?? 1,
       is_active: row.product_active ?? true,
     });
     setOpen(true);
@@ -211,7 +222,7 @@ export default function AdminBillingPlans() {
             <Field label="Display name"><input className="adm-input" value={form.display_name} onChange={(e) => setForm((f) => ({ ...f, display_name: e.target.value }))} /></Field>
             <Field label="Plan tier"><select className="adm-input" value={form.plan_tier} onChange={(e) => setForm((f) => ({ ...f, plan_tier: e.target.value as any }))}><option value="free">free</option><option value="starter">starter</option><option value="pro">pro</option><option value="enterprise">enterprise</option></select></Field>
             <Field label="Preço (BRL)"><input className="adm-input" type="number" value={form.unit_amount_brl} onChange={(e) => setForm((f) => ({ ...f, unit_amount_brl: e.target.value }))} /></Field>
-            <Field label="Intervalo"><select className="adm-input" value={form.recurring_interval} onChange={(e) => setForm((f) => ({ ...f, recurring_interval: e.target.value as any }))}><option value="month">month</option><option value="year">year</option></select></Field>
+            <Field label="Intervalo"><select className="adm-input" value={form.recurring_interval} onChange={(e) => setForm((f) => ({ ...f, recurring_interval: e.target.value as any }))}><option value="day">day</option><option value="month">month</option><option value="year">year</option></select></Field>
             <Field label="Ordem"><input className="adm-input" type="number" value={form.sort_order} onChange={(e) => setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))} /></Field>
             <Field label="Trial days"><input className="adm-input" type="number" value={form.trial_days} onChange={(e) => setForm((f) => ({ ...f, trial_days: Number(e.target.value) }))} /></Field>
             <Field label="Limite de créditos"><input className="adm-input" type="number" value={form.credits_limit} onChange={(e) => setForm((f) => ({ ...f, credits_limit: Number(e.target.value) }))} /></Field>
