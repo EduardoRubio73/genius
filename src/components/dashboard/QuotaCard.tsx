@@ -84,7 +84,7 @@ export function QuotaCard({
             </p>
             <div className="grid grid-cols-4 gap-2">
               {ACTION_COSTS.map((a) => {
-                const maxActions = Math.floor(creditsRemaining / a.cost);
+                const maxActions = Math.floor(totalRemaining / a.cost);
                 return (
                   <div key={a.label} className="flex flex-col items-center gap-1 text-center">
                     <div className="flex items-center gap-0.5">

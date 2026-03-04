@@ -42,6 +42,7 @@ export function useQuotaBalance(orgId: string | undefined) {
         bonus_total: Number(data.bonus_total ?? 0),
         bonus_used: Number(data.bonus_used ?? 0),
         bonus_remaining: Number(data.bonus_remaining ?? 0),
+        extra_credits: Number(data.extra_credits ?? 0),
         total_remaining: Number(data.total_remaining ?? 0),
         account_status: data.account_status ?? "active",
         trial_ends_at: data.trial_ends_at ?? null,

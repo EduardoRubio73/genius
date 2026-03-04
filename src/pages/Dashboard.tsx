@@ -313,7 +313,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { icon: Crown, label: "Plano Atual", value: quota?.plan_name ?? "Free", sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary" },
-            { icon: Zap, label: "Cotas Restantes", value: creditsRemaining, sub: `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary" },
+            { icon: Zap, label: "Cotas Restantes", value: creditsRemaining + extraCredits, sub: extraCredits > 0 ? `${creditsRemaining} plano + ${extraCredits} extras` : `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary" },
             { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent" },
             { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground" },
           ].map((card, i) => (
