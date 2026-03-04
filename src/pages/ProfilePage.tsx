@@ -411,8 +411,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   {(() => {
                     const interval = plan.recurring_interval ?? "mês";
                     const isUnlimited = plan.plan_tier === "enterprise";
-                    const cl = plan.credits_limit;
-                    const fmt = (cost: number) => isUnlimited ? "Ilimitado" : `${Math.floor(cl / cost)} / ${interval}`;
+                    const fmtVal = (val: number) => isUnlimited ? "Ilimitado" : `${val} / ${interval}`;
                     return (
                       <>
                         <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
@@ -423,14 +422,15 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                         )}
 
                         <p className="text-sm font-semibold text-foreground mb-3 mt-2">
-                          {isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`}
+                          {isUnlimited ? "Ilimitado" : `${plan.credits_limit} cotas / ${interval}`}
                         </p>
 
                         <div className="space-y-2 flex-1 mb-4">
-                          {featureRow("✨ Prompts (1 cota)", fmt(1))}
-                          {featureRow("🏗️ SaaS Specs (2 cotas)", fmt(2))}
-                          {featureRow("⚡ Modo Misto (2 cotas)", fmt(2))}
-                          {featureRow("⚙️ BUILD Engine (5 cotas)", fmt(5))}
+                          {featureRow("✨ Prompts (1 cota)", fmtVal(plan.prompts_limit))}
+                          {featureRow("🏗️ SaaS Specs (2 cotas)", fmtVal(plan.saas_specs_limit))}
+                          {featureRow("⚡ Modo Misto (2 cotas)", fmtVal(plan.modo_misto_limit))}
+                          {featureRow("⚙️ BUILD Engine (5 cotas)", fmtVal(plan.build_engine_limit))}
+                          {featureRow("👥 Membros", isUnlimited ? "Ilimitado" : String(plan.members_limit))}
                         </div>
                       </>
                     );
