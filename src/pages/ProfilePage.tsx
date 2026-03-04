@@ -205,6 +205,11 @@ interface BillingProduct {
   plan_tier: string;
   is_featured: boolean;
   credits_limit: number;
+  prompts_limit: number;
+  saas_specs_limit: number;
+  modo_misto_limit: number;
+  build_engine_limit: number;
+  members_limit: number;
   recurring_interval: string | null;
   cta_label: string | null;
   stripe_price_id: string | null;
@@ -229,6 +234,11 @@ function useBillingProducts() {
         plan_tier: p.plan_tier,
         is_featured: p.is_featured ?? false,
         credits_limit: p.credits_limit ?? 0,
+        prompts_limit: p.prompts_limit ?? 0,
+        saas_specs_limit: p.saas_specs_limit ?? 0,
+        modo_misto_limit: p.modo_misto_limit ?? 0,
+        build_engine_limit: p.build_engine_limit ?? 0,
+        members_limit: p.members_limit ?? 1,
         recurring_interval: p.recurring_interval ?? null,
         cta_label: p.cta_label ?? "Assinar",
         stripe_price_id: p.stripe_price_id,
@@ -401,8 +411,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   {(() => {
                     const interval = plan.recurring_interval ?? "mês";
                     const isUnlimited = plan.plan_tier === "enterprise";
-                    const cl = plan.credits_limit;
-                    const fmt = (cost: number) => isUnlimited ? "Ilimitado" : `${Math.floor(cl / cost)} / ${interval}`;
+                    const fmtVal = (val: number) => isUnlimited ? "Ilimitado" : `${val} / ${interval}`;
                     return (
                       <>
                         <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
@@ -413,14 +422,15 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                         )}
 
                         <p className="text-sm font-semibold text-foreground mb-3 mt-2">
-                          {isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`}
+                          {isUnlimited ? "Ilimitado" : `${plan.credits_limit} cotas / ${interval}`}
                         </p>
 
                         <div className="space-y-2 flex-1 mb-4">
-                          {featureRow("✨ Prompts (1 cota)", fmt(1))}
-                          {featureRow("🏗️ SaaS Specs (2 cotas)", fmt(2))}
-                          {featureRow("⚡ Modo Misto (2 cotas)", fmt(2))}
-                          {featureRow("⚙️ BUILD Engine (5 cotas)", fmt(5))}
+                          {featureRow("✨ Prompts (1 cota)", fmtVal(plan.prompts_limit))}
+                          {featureRow("🏗️ SaaS Specs (2 cotas)", fmtVal(plan.saas_specs_limit))}
+                          {featureRow("⚡ Modo Misto (2 cotas)", fmtVal(plan.modo_misto_limit))}
+                          {featureRow("⚙️ BUILD Engine (5 cotas)", fmtVal(plan.build_engine_limit))}
+                          {featureRow("👥 Membros", isUnlimited ? "Ilimitado" : String(plan.members_limit))}
                         </div>
                       </>
                     );
