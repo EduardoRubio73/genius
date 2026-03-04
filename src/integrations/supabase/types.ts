@@ -2106,16 +2106,31 @@ export type Database = {
       }
       v_active_stripe_plans: {
         Row: {
+          build_detail: string | null
+          build_label: string | null
+          cta_label: string | null
           display_name: string | null
+          features: Json | null
+          is_featured: boolean | null
+          members_label: string | null
+          misto_detail: string | null
+          misto_label: string | null
           name: string | null
+          period_label: string | null
           plan_tier: Database["public"]["Enums"]["plan_tier"] | null
           price_active: boolean | null
           price_id: string | null
           product_active: boolean | null
           product_id: string | null
+          prompts_detail: string | null
+          prompts_label: string | null
           recurring_interval: string | null
+          saas_specs_detail: string | null
+          saas_specs_label: string | null
           sort_order: number | null
           stripe_price_id: string | null
+          total_quotas_label: string | null
+          trial_label: string | null
           unit_amount: number | null
         }
         Relationships: []
