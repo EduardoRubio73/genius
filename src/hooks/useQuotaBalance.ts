@@ -34,8 +34,21 @@ export function useQuotaBalance(orgId: string | undefined) {
       if (!data) return null;
 
       const creditsLimit = Number(data.credits_limit ?? 0);
-      const creditsUsed = Number(data.credits_used ?? 0);
-      const creditsRemaining = Number(data.credits_remaining ?? Math.max(creditsLimit - creditsUsed, 0));
+      let creditsUsed = Number(data.credits_used ?? 0);
+      let creditsRemaining = Number(data.credits_remaining ?? Math.max(creditsLimit - creditsUsed, 0));
+      let percentUsed = Number(data.percent_used ?? 0);
+
+      // Detect new billing cycle where credits haven't been reset yet
+      const isNewCycleNotReset =
+        data.subscription_status === 'active' &&
+        creditsUsed >= creditsLimit &&
+        creditsLimit > 0;
+
+      if (isNewCycleNotReset) {
+        creditsUsed = 0;
+        creditsRemaining = creditsLimit;
+        percentUsed = 0;
+      }
 
       return {
         plan_name: data.plan_name ?? null,
@@ -43,7 +56,7 @@ export function useQuotaBalance(orgId: string | undefined) {
         credits_limit: creditsLimit,
         credits_used: creditsUsed,
         credits_remaining: creditsRemaining,
-        percent_used: Number(data.percent_used ?? 0),
+        percent_used: percentUsed,
         current_period_end: data.current_period_end ?? null,
         // backward compatibility for current UI consumers
         plan_total: creditsLimit,
@@ -53,7 +66,7 @@ export function useQuotaBalance(orgId: string | undefined) {
         bonus_used: 0,
         bonus_remaining: 0,
         total_remaining: creditsRemaining,
-        account_status: "active",
+        account_status: data.subscription_status ?? "active",
         trial_ends_at: null,
         reset_at: data.current_period_end ?? null,
       } as QuotaBalance;

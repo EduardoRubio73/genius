@@ -149,12 +149,78 @@ async function syncPrice(payload: SyncPayload) {
   }
 }
 
+async function handleStripeWebhook(req: Request): Promise<Response> {
+  const body = await req.text();
+  const sig = req.headers.get("stripe-signature");
+  const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+
+  if (sig && webhookSecret) {
+    try {
+      const event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+      console.log("Stripe webhook event:", event.type);
+
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const orgId = session.metadata?.org_id;
+        if (orgId) {
+          // Reset plan credits for new subscription cycle
+          const { error } = await admin
+            .from("organizations")
+            .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
+            .eq("id", orgId);
+          if (error) console.error("Failed to reset credits:", error);
+          else console.log("Credits reset for org:", orgId);
+        }
+      }
+
+      if (event.type === "invoice.payment_succeeded") {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId = invoice.subscription as string | null;
+        if (subId) {
+          const { data: sub } = await admin
+            .from("billing_subscriptions")
+            .select("org_id")
+            .eq("id", subId)
+            .maybeSingle();
+          if (sub?.org_id) {
+            await admin
+              .from("organizations")
+              .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
+              .eq("id", sub.org_id);
+            console.log("Credits reset via invoice for org:", sub.org_id);
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Webhook signature verification failed:", err);
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // No signature = not a webhook, fall through
+  return new Response(null, { status: 0 }); // sentinel
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Check if this is a Stripe webhook (has signature header)
+    const sig = req.headers.get("stripe-signature");
+    if (sig) {
+      return await handleStripeWebhook(req);
+    }
+
     const payload: SyncPayload = await req.json();
 
     if (!payload?.table || !payload?.new_record) {
