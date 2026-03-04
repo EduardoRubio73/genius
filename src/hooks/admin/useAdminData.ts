@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 
 // ─── Users ───
 export function useAdminUsers(page = 0, search = "") {
