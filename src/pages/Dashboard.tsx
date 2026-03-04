@@ -147,7 +147,7 @@ function ModeActionCard({
         "hover:shadow-xl hover:scale-[1.02]",
         disabled
           ? "opacity-40 cursor-not-allowed grayscale border-border/40 bg-muted/30"
-          : cn("border-border/60 bg-card/50 hover:border-primary/30 shadow-lg", borderAccent)
+          : cn("border bg-card hover:border-primary/30 shadow-md", borderAccent)
       )}
     >
       <div className={cn(
