@@ -9,6 +9,11 @@ interface PricingProduct {
   display_name: string | null;
   is_featured: boolean;
   credits_limit: number;
+  prompts_limit: number;
+  saas_specs_limit: number;
+  modo_misto_limit: number;
+  build_engine_limit: number;
+  members_limit: number;
   plan_tier: string;
   recurring_interval: string | null;
   features: { text: string; included: boolean }[];
