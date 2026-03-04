@@ -1,22 +1,32 @@
-import Stripe from "https://esm.sh/stripe@16.12.0?target=deno";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY")!;
-const admin = createClient(supabaseUrl, serviceRole);
-const stripe = new Stripe(stripeSecret, { apiVersion: "2024-06-20" });
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
   try {
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY não configurada. Adicione em Settings → Edge Functions.");
+    }
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+
     const body = await req.json();
     const productId = crypto.randomUUID();
     const priceId = crypto.randomUUID();
 
     const stripeProduct = await stripe.products.create({
-      name: body.name,
+      name: body.display_name || body.name,
       active: body.is_active ?? true,
       metadata: { product_id: productId, plan_tier: body.plan_tier ?? "starter" },
     });
@@ -45,6 +55,8 @@ Deno.serve(async (req) => {
       is_featured: Boolean(body.is_featured),
       is_active: body.is_active ?? true,
       stripe_product_id: stripeProduct.id,
+      stripe_synced: true,
+      stripe_last_synced_at: new Date().toISOString(),
       metadata,
     });
     if (productError) throw productError;
@@ -58,12 +70,21 @@ Deno.serve(async (req) => {
       trial_period_days: Number(body.trial_days ?? 0),
       is_active: body.is_active ?? true,
       stripe_price_id: stripePrice.id,
+      stripe_synced: true,
+      stripe_last_synced_at: new Date().toISOString(),
       metadata,
     });
     if (priceError) throw priceError;
 
-    return new Response(JSON.stringify({ ok: true, product_id: productId, price_id: priceId }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(
+      JSON.stringify({ ok: true, product_id: productId, price_id: priceId }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
-    return new Response(JSON.stringify({ error: String(error) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    console.error("create-billing-plan error:", error);
+    return new Response(
+      JSON.stringify({ error: String(error) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
