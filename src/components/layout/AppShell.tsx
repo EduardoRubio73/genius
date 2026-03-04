@@ -32,6 +32,13 @@ export function AppShell({
 }: AppShellProps) {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.rpc("is_super_admin").then(({ data }) => setIsSuperAdmin(!!data));
+  }, [user]);
 
   const displayName = userName || (userEmail ? userEmail.split("@")[0] : "Usuário");
 
