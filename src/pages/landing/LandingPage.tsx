@@ -555,6 +555,9 @@ const handleSubscribe = async (priceId: string | null) => {
                     <div className="lrow"><span className="ll">👥 Membros</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : (p.members_label ?? "1")}</span></div>
                     <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${p.credits_limit} cotas / ${interval}`}</span></div>
                   </div>
+                  <p style={{ fontSize: 10.5, color: "var(--mu)", textAlign: "center", marginTop: 4, marginBottom: 4, lineHeight: 1.5 }}>
+                    Cotas compartilhadas entre todas as ações
+                  </p>
                   <ul className="pc-feats">
                     {p.features.map((f, i) => (
                       <li key={i} className={f.included ? "" : "no"}>{f.text}</li>

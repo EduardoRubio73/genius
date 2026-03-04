@@ -75,13 +75,23 @@ export function QuotaCard({
               Custo por ação
             </p>
             <div className="grid grid-cols-4 gap-2">
-              {ACTION_COSTS.map((a) => (
-                <div key={a.label} className="flex flex-col items-center gap-1 text-center">
-                  <a.icon className={cn("h-3.5 w-3.5", a.color)} />
-                  <span className="text-[10px] text-muted-foreground">{a.label}</span>
-                  <span className="text-xs font-bold text-foreground">{a.cost}</span>
-                </div>
-              ))}
+              {ACTION_COSTS.map((a) => {
+                const maxActions = Math.floor(creditsRemaining / a.cost);
+                return (
+                  <div key={a.label} className="flex flex-col items-center gap-1 text-center">
+                    <div className="flex items-center gap-0.5">
+                      <a.icon className={cn("h-3.5 w-3.5", a.color)} />
+                      <InfoTooltip
+                        content={`Com seu saldo atual você pode gerar até ${maxActions} ${a.label}${maxActions !== 1 ? "s" : ""}.`}
+                        side="top"
+                        className="ml-0"
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{a.label}</span>
+                    <span className="text-xs font-bold text-foreground">{a.cost}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
