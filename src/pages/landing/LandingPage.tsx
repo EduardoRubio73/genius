@@ -299,7 +299,7 @@ const handleSubscribe = async (priceId: string | null) => {
           if (Array.isArray(raw)) return raw;
           try { return JSON.parse(raw); } catch { return []; }
         };
-        setPricingProducts(data.map((p: any) => ({
+        setPricingProducts(data.filter((p: any) => !p.name?.startsWith("Topup")).map((p: any) => ({
           id: p.product_id,
           display_name: p.display_name || p.name,
           is_featured: p.is_featured ?? false,
@@ -480,20 +480,20 @@ const handleSubscribe = async (priceId: string | null) => {
               <div className="cc-amount">5</div><div className="cc-unit">cotas adicionais</div>
               <div className="cc-price">R$4,99</div><div className="cc-per">R$1,00 por cota</div>
               <div className="cc-note">✓ Nunca expiram</div>
-              <button className="cc-btn cc-btn-o">Comprar</button>
+              <div className="cc-desc">Pacote ideal para uso eventual. Créditos não expiram e se acumulam com as cotas do plano.</div>
             </div>
             <div className="credit-card featured-c">
               <div className="cc-top-badge">⚡ Melhor custo</div>
               <div className="cc-amount">15</div><div className="cc-unit">cotas adicionais</div>
               <div className="cc-price">R$12,99</div><div className="cc-per">R$0,87 por cota — economia de 13%</div>
               <div className="cc-note">✓ Nunca expiram</div>
-              <button className="cc-btn cc-btn-g">Comprar</button>
+              <div className="cc-desc">Melhor custo-benefício. Ideal para quem usa a plataforma regularmente e quer garantir cotas extras.</div>
             </div>
             <div className="credit-card">
               <div className="cc-amount">40</div><div className="cc-unit">cotas adicionais</div>
               <div className="cc-price">R$29,99</div><div className="cc-per">R$0,75 por cota — economia de 25%</div>
               <div className="cc-note">✓ Nunca expiram</div>
-              <button className="cc-btn cc-btn-o">Comprar</button>
+              <div className="cc-desc">Pacote para uso intensivo. Maior economia por cota, perfeito para times e projetos grandes.</div>
             </div>
           </div>
           <p style={{ textAlign: "center", fontSize: 12.5, color: "var(--mu)", marginTop: 24 }}>Cotas adicionais são consumidas após as cotas mensais do plano se esgotarem.</p>
