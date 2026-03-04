@@ -36,9 +36,12 @@ export function QuotaCard({
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
             <Zap className="h-4 w-4" />
           </div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Cotas do período
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Cotas do período
+            </p>
+            <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
+          </div>
         </div>
         {!loading && creditsRemaining <= 0 && (
           <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20 uppercase tracking-wider">
