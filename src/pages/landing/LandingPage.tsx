@@ -426,7 +426,7 @@ const handleSubscribe = async (priceId: string | null) => {
       <section className="modes rv">
         <div className="wrap">
           <div className="tag">Como funciona</div>
-          <h2 className="sh">Três modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
+          <h2 className="sh">Quatro modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
           <div className="modes-grid">
             <div className="mc mc-p"><div className="mc-badge mb-pop">Mais usado</div><div className="mc-icon">✨</div><div className="mc-title">Gerador de Prompt</div><div className="mc-desc">Escreva sua ideia. A IA distribui em especialidade, persona, tarefa, objetivo e contexto. Copie o prompt pronto.</div><div className="mc-pill"><strong>1 cota</strong> por geração</div><div className="mc-n">01</div></div>
             <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">02</div></div>
