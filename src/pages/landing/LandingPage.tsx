@@ -484,9 +484,8 @@ export default function LandingPage() {
               const price = p.unit_amount != null ? Math.round(p.unit_amount / 100) : 0;
               const colorClass = p.is_featured ? "v" : p.sort_order === 3 ? "g" : p.sort_order === 1 ? "c" : "";
               const isUnlimited = p.plan_tier === "enterprise";
-              const cl = p.credits_limit;
               const interval = p.recurring_interval ?? "mês";
-              const fmt = (cost: number) => isUnlimited ? "Ilimitado" : `${Math.floor(cl / cost)} / ${interval}`;
+              const fmtVal = (val: number) => isUnlimited ? "Ilimitado" : `${val} / ${interval}`;
               return (
                 <div key={p.id} className={`pc${p.is_featured ? " feat" : ""}`}>
                   {p.is_featured && <div className="pc-top-badge">⚡ Mais popular</div>}
@@ -498,11 +497,12 @@ export default function LandingPage() {
                   {p.trial_period_days && p.trial_period_days > 0 && <div className="pc-trial">{p.trial_period_days} dias grátis</div>}
                   <div className="pc-div" />
                   <div className="pc-limits">
-                    <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className={`lv ${colorClass}`}>{fmt(1)}</span></div>
-                    <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className={`lv ${colorClass}`}>{fmt(2)}</span></div>
-                    <div className="lrow"><span className="ll">⚡ Modo Misto (2 cotas)</span><span className={`lv ${colorClass}`}>{fmt(2)}</span></div>
-                    <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className={`lv ${colorClass}`}>{fmt(5)}</span></div>
-                    <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`}</span></div>
+                    <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className={`lv ${colorClass}`}>{fmtVal(p.prompts_limit)}</span></div>
+                    <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.saas_specs_limit)}</span></div>
+                    <div className="lrow"><span className="ll">⚡ Modo Misto (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.modo_misto_limit)}</span></div>
+                    <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.build_engine_limit)}</span></div>
+                    <div className="lrow"><span className="ll">👥 Membros</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : p.members_limit}</span></div>
+                    <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${p.credits_limit} cotas / ${interval}`}</span></div>
                   </div>
                   <ul className="pc-feats">
                     {p.features.map((f, i) => (
