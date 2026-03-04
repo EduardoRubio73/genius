@@ -120,7 +120,8 @@ export default function MistoMode() {
       setFields(refinedFields);
       setPromptGerado(refineData.prompt_gerado || "");
 
-      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: currentSessionId });
+      const creditResult = await callEdgeFunction("consume-credit", { org_id: orgId, user_id: user.id, session_id: currentSessionId });
+      if (creditResult.error) { setCreditModal(creditResult.error); setStep("input"); return; }
 
       setStep("generating-spec");
       const specData = await callEdgeFunction("refine-prompt", {

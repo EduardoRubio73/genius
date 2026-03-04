@@ -146,8 +146,9 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
 
       setSpecMarkdown(specData.spec_md || "");
 
-      // Consume credit
-      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: currentSessionId });
+      // Consume credit via edge function
+      const creditResult = await callEdgeFunction("consume-credit", { org_id: orgId, user_id: user.id, session_id: currentSessionId });
+      if (creditResult.error) { setCreditModal(creditResult.error); setStep(7); return; }
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
