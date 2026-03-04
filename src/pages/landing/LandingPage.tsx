@@ -8,22 +8,15 @@ interface PricingProduct {
   id: string;
   display_name: string | null;
   is_featured: boolean;
-  total_quotas_label: string | null;
-  prompts_label: string | null;
-  prompts_detail: string | null;
-  saas_specs_label: string | null;
-  saas_specs_detail: string | null;
-  misto_label: string | null;
-  misto_detail: string | null;
-  build_label: string | null;
-  build_detail: string | null;
-  members_label: string | null;
+  credits_limit: number;
+  plan_tier: string;
+  recurring_interval: string | null;
   features: { text: string; included: boolean }[];
-  trial_label: string | null;
-  period_label: string | null;
+  trial_period_days: number | null;
   cta_label: string | null;
   sort_order: number;
   unit_amount: number | null;
+  stripe_price_id: string | null;
 }
 
 /* ── Terms & Privacy Content ── */
