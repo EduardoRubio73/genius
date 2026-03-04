@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Zap, Sparkles, FileCode, Layers, Rocket, Crown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { useNavigate } from "react-router-dom";
 
 interface QuotaCardProps {
