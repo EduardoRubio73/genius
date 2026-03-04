@@ -146,7 +146,7 @@ export default function AdminBillingPlans() {
       trial_days: 0,
       credits_limit: 0,
       members_limit: 1,
-      is_active: row.is_active ?? true,
+      is_active: row.product_active ?? true,
     });
     setOpen(true);
   };
