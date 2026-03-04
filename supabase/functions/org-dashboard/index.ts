@@ -58,6 +58,15 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // Fetch extra credits from org_credits
+    const serviceRole = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: orgCredits } = await serviceRole
+      .from("org_credits")
+      .select("extra_balance")
+      .eq("org_id", org_id)
+      .maybeSingle();
+    const extraCredits = orgCredits?.extra_balance ?? 0;
+
     const planName = sub?.billing_prices?.billing_products?.display_name ?? sub?.billing_prices?.billing_products?.name ?? null;
     const planPrice = sub?.billing_prices?.unit_amount ?? 0;
     const creditsLimit = org.plan_credits_total ?? 0;
