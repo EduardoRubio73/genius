@@ -12,12 +12,12 @@ type PlanRow = {
   display_name: string | null;
   plan_tier: string | null;
   price_id: string | null;
-  stripe_product_id: string | null;
   stripe_price_id: string | null;
   unit_amount: number | null;
   recurring_interval: string | null;
   sort_order: number | null;
-  is_active?: boolean;
+  product_active: boolean | null;
+  price_active: boolean | null;
 };
 
 type PlanForm = {
