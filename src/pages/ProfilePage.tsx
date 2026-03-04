@@ -240,9 +240,26 @@ function useBillingProducts() {
   });
 }
 
+function useCreditPacks() {
+  return useQuery({
+    queryKey: ["credit-packs-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("credit_packs")
+        .select("*")
+        .eq("is_active", true)
+        .order("credits");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 function BillingTab({ orgId }: { orgId: string | undefined }) {
   const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
   const { data: products, isLoading: productsLoading } = useBillingProducts();
+  const { data: packs, isLoading: packsLoading } = useCreditPacks();
+  const [buyingPackId, setBuyingPackId] = useState<string | null>(null);
 
   const subscribe = async (priceId: string) => {
     try {
@@ -254,6 +271,25 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
       toast.error("Não foi possível redirecionar para o checkout.");
     } catch (err) {
       toast.error("Não foi possível iniciar a assinatura.");
+    }
+  };
+
+  const buyCredits = async (packId: string) => {
+    setBuyingPackId(packId);
+    try {
+      const data = await callEdgeFunction("create-topup-checkout", {
+        pack_id: packId,
+        org_id: orgId,
+      });
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error("Não foi possível redirecionar para o checkout.");
+    } catch (err) {
+      toast.error("Erro ao iniciar compra de créditos.");
+    } finally {
+      setBuyingPackId(null);
     }
   };
 
