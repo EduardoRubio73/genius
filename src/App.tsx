@@ -34,6 +34,7 @@ import BuildMode from "@/pages/build/BuildMode";
 import MemoryPage from "./pages/MemoryPage";
 import HistoryPage from "./pages/HistoryPage";
 import ProfilePage from "./pages/ProfilePage";
+import BillingSuccess from "./pages/BillingSuccess";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,11 @@ function App() {
             <Route
               path="/profile"
               element={<AuthGuard><ProfilePage /></AuthGuard>}
+            />
+
+            <Route
+              path="/billing/success"
+              element={<AuthGuard><BillingSuccess /></AuthGuard>}
             />
 
             {/* Admin */}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard } from "lucide-react";
+import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard, Coins, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
@@ -240,9 +240,26 @@ function useBillingProducts() {
   });
 }
 
+function useCreditPacks() {
+  return useQuery({
+    queryKey: ["credit-packs-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("credit_packs")
+        .select("*")
+        .eq("is_active", true)
+        .order("credits");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 function BillingTab({ orgId }: { orgId: string | undefined }) {
   const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
   const { data: products, isLoading: productsLoading } = useBillingProducts();
+  const { data: packs, isLoading: packsLoading } = useCreditPacks();
+  const [buyingPackId, setBuyingPackId] = useState<string | null>(null);
 
   const subscribe = async (priceId: string) => {
     try {
@@ -254,6 +271,25 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
       toast.error("Não foi possível redirecionar para o checkout.");
     } catch (err) {
       toast.error("Não foi possível iniciar a assinatura.");
+    }
+  };
+
+  const buyCredits = async (packId: string) => {
+    setBuyingPackId(packId);
+    try {
+      const data = await callEdgeFunction("create-topup-checkout", {
+        pack_id: packId,
+        org_id: orgId,
+      });
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error("Não foi possível redirecionar para o checkout.");
+    } catch (err) {
+      toast.error("Erro ao iniciar compra de créditos.");
+    } finally {
+      setBuyingPackId(null);
     }
   };
 
@@ -413,6 +449,59 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Credit Packs */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-1">Comprar Créditos Extras</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Adicione créditos extras para continuar utilizando as funcionalidades de IA.
+        </p>
+        {packsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+          </div>
+        ) : (packs ?? []).length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum pacote disponível no momento.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
+            {(packs ?? []).map((pack) => (
+              <div
+                key={pack.id}
+                className={cn(
+                  "rounded-xl border p-5 flex flex-col items-center text-center transition-colors",
+                  pack.is_featured
+                    ? "border-primary/40 ring-1 ring-primary/20 bg-primary/5"
+                    : "border-border/60 bg-card/50"
+                )}
+              >
+                {pack.is_featured && (
+                  <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider -mt-8 mb-2">
+                    ⭐ Mais popular
+                  </span>
+                )}
+                <Coins className="h-8 w-8 text-primary mb-3" />
+                <p className="text-3xl font-extrabold text-foreground">{pack.credits}</p>
+                <p className="text-xs text-muted-foreground mb-2">créditos</p>
+                <p className="text-lg font-bold text-foreground mb-4">
+                  R$ {Number(pack.price_brl).toFixed(2).replace(".", ",")}
+                </p>
+                <Button
+                  onClick={() => buyCredits(pack.id)}
+                  disabled={buyingPackId !== null}
+                  className="w-full"
+                  variant={pack.is_featured ? "default" : "outline"}
+                >
+                  {buyingPackId === pack.id ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
+                  ) : (
+                    "Comprar"
+                  )}
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </div>
