@@ -170,7 +170,10 @@ export default function AdminBillingPlans() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h1 className="page-title" style={{ marginBottom: 0 }}>Planos (Stripe Sync)</h1>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="adm-btn outline" onClick={() => syncStripe.mutate()}><RefreshCw size={14} /> Conferir Stripe</button>
+          <button className="adm-btn outline" disabled={syncStripe.isPending} onClick={() => syncStripe.mutate()}>
+            {syncStripe.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {syncStripe.isPending ? "Sincronizando…" : "Conferir Stripe"}
+          </button>
           <button className="adm-btn primary" onClick={openNew}><Plus size={14} /> Criar novo plano</button>
         </div>
       </div>
