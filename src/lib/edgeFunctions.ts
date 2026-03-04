@@ -1,31 +1,30 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export async function callEdgeFunction(name: string, body?: any) {
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+export async function callEdgeFunction(name: string, body?: any) {
   const { data: { session } } = await supabase.auth.getSession();
 
-  if (!session) {
-    throw new Error("User not authenticated");
+  if (!session?.access_token) {
+    throw new Error("not_authenticated");
   }
 
-  const res = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify(body ?? {})
-    }
-  );
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body ?? {}),
+  });
+
+  const text = await res.text();
 
   if (!res.ok) {
-    const text = await res.text();
-    console.error("Edge Function Error:", text);
     throw new Error(text);
   }
 
-  return await res.json();
+  return JSON.parse(text);
 }
