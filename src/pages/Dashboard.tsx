@@ -91,7 +91,7 @@ function SummaryCard({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card/50 p-4 flex items-center gap-3 transition-all hover:shadow-md hover:border-border">
+    <div className="rounded-xl border bg-card p-5 flex items-center gap-3 shadow-md hover:shadow-xl transition-all duration-300">
       <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", iconClass ?? "bg-muted text-muted-foreground")}>
         <Icon className="h-5 w-5" />
       </div>
@@ -147,7 +147,7 @@ function ModeActionCard({
         "hover:shadow-xl hover:scale-[1.02]",
         disabled
           ? "opacity-40 cursor-not-allowed grayscale border-border/40 bg-muted/30"
-          : cn("border-border/60 bg-card/50 hover:border-primary/30 shadow-lg", borderAccent)
+          : cn("border bg-card hover:border-primary/30 shadow-md", borderAccent)
       )}
     >
       <div className={cn(
@@ -193,10 +193,10 @@ function UsageProgressBar({ used, limit, className }: { used: number; limit: num
   const pct = limit > 0 ? Math.min(100, Math.max(0, (used / limit) * 100)) : 0;
 
   const barColor =
-    pct >= 100 ? "from-destructive to-destructive" :
-    pct >= 80 ? "from-yellow-400 to-yellow-500" :
-    pct >= 50 ? "from-yellow-300 to-yellow-400" :
-    "from-primary to-primary";
+    pct >= 90 ? "from-red-500 to-red-600" :
+    pct >= 75 ? "from-orange-400 to-orange-500" :
+    pct >= 50 ? "from-yellow-400 to-yellow-500" :
+    "from-green-400 to-green-600";
 
   return (
     <div className={cn("space-y-1.5", className)}>
@@ -233,7 +233,7 @@ function QuickActionCard({
   return (
     <button
       onClick={() => navigate(href)}
-      className="flex items-center gap-3 p-4 rounded-xl border border-border/60 bg-card/50 hover:bg-card hover:border-border hover:shadow-md text-left transition-all duration-200 group w-full"
+      className="flex items-center gap-3 p-4 rounded-xl border bg-card hover:shadow-xl shadow-md text-left transition-all duration-300 group w-full"
     >
       <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted", accent)}>
         <Icon className="h-4 w-4" />
@@ -293,7 +293,7 @@ export default function Dashboard() {
               </h1>
               <p className="mt-1 text-muted-foreground">O que vamos construir hoje?</p>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-bold uppercase tracking-wider shadow-sm">
               <Crown className="w-3.5 h-3.5" />
               Plano {quota?.plan_name ?? "Free"}
             </div>
@@ -347,7 +347,7 @@ export default function Dashboard() {
 
       {/* ── Usage Progress ── */}
       <section className="mb-6">
-        <div className="rounded-xl border border-border/60 bg-card/50 p-5">
+        <div className="rounded-xl border bg-card shadow-md p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
               Uso do período
