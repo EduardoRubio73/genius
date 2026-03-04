@@ -347,7 +347,7 @@ export default function Dashboard() {
 
       {/* ── Usage Progress ── */}
       <section className="mb-6">
-        <div className="rounded-xl border border-border/60 bg-card/50 p-5">
+        <div className="rounded-xl border bg-card shadow-md p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
               Uso do período
