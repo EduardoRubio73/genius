@@ -1,77 +1,25 @@
 import {
   useAdminKpis, useAdminRecentAudit,
 } from "@/hooks/admin/useAdminOverview";
+import { useOrgDashboard } from "@/hooks/useOrgDashboard";
+import { useOrgUsage } from "@/hooks/useOrgUsage";
+import { useOrgSubscription } from "@/hooks/useOrgSubscription";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { PlanBadge, StatusBadge } from "@/components/admin/Badges";
 import {
   Users, Building2, CreditCard, DollarSign,
   Activity, AlertTriangle, FileText, Zap,
-  CheckCircle2, XCircle, ArrowRight,
+  CheckCircle2, XCircle, ArrowRight, Clock,
+  TrendingUp, Shield,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import "./admin.css";
 
-// ── Hooks for overview data ──
-
-function useSubscriptionCounts() {
-  return useQuery({
-    queryKey: ["admin-sub-counts"],
-    queryFn: async () => {
-      const { count: activeCount } = await supabase
-        .from("billing_subscriptions")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["active", "trialing"]);
-
-      const { count: totalDbCount } = await supabase
-        .from("billing_subscriptions")
-        .select("*", { count: "exact", head: true });
-
-      return {
-        active: activeCount ?? 0,
-        totalDb: totalDbCount ?? 0,
-      };
-    },
-  });
-}
-
-function useRecentAuditErrors() {
-  return useQuery({
-    queryKey: ["admin-audit-errors-24h"],
-    queryFn: async () => {
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("*")
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      const errors = data?.filter(l => l.action.includes("delete") || l.action.includes("error")) ?? [];
-      return { total: data?.length ?? 0, errors: errors.length };
-    },
-  });
-}
-
-function useCreditUsageToday() {
-  return useQuery({
-    queryKey: ["admin-credit-usage-today"],
-    queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const { data, error } = await supabase
-        .from("credit_transactions")
-        .select("amount")
-        .lt("amount", 0)
-        .gte("created_at", today.toISOString());
-      if (error) throw error;
-      const total = data?.reduce((s, r) => s + Math.abs(r.amount), 0) ?? 0;
-      return total;
-    },
-  });
-}
+// ── Admin-only hooks (platform-wide, keep direct queries) ──
 
 function usePaymentFailures() {
   return useQuery({
@@ -102,6 +50,24 @@ function useStripeSyncStatus() {
         lastSync,
         isHealthy: lastSync ? (Date.now() - new Date(lastSync).getTime()) < 24 * 60 * 60 * 1000 : false,
       };
+    },
+  });
+}
+
+function useRecentAuditErrors() {
+  return useQuery({
+    queryKey: ["admin-audit-errors-24h"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      const errors = data?.filter(l => l.action.includes("delete") || l.action.includes("error")) ?? [];
+      return { total: data?.length ?? 0, errors: errors.length };
     },
   });
 }
@@ -173,10 +139,20 @@ function getActivityBadge(action: string) {
 
 export default function AdminOverview() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: profile } = useProfile(user?.id);
+  const orgId = profile?.personal_org_id ?? undefined;
+
+  // Platform-wide KPIs (admin RPC — stays as-is)
   const { data: kpis, isLoading: kpisLoading } = useAdminKpis();
-  const { data: subCounts, isLoading: subsLoading } = useSubscriptionCounts();
+
+  // Org-level data via Edge Functions
+  const { data: orgDashboard, isLoading: orgLoading } = useOrgDashboard(orgId);
+  const { data: orgUsage } = useOrgUsage(orgId);
+  const { data: orgSubscription } = useOrgSubscription(orgId);
+
+  // Admin-specific queries (platform-wide, no edge function equivalent)
   const { data: auditInfo } = useRecentAuditErrors();
-  const { data: creditUsage } = useCreditUsageToday();
   const { data: paymentFailures } = usePaymentFailures();
   const { data: stripeSync } = useStripeSyncStatus();
   const { data: recentAudit } = useAdminRecentAudit(6);
@@ -184,13 +160,19 @@ export default function AdminOverview() {
   const mrr = kpis?.mrr_brl ?? 0;
   const mrrFormatted = `R$ ${(mrr / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
 
+  // Credit usage today from org usage data
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const creditsToday = orgUsage
+    ?.filter(t => t.amount < 0 && t.created_at.startsWith(todayStr))
+    .reduce((s, t) => s + Math.abs(t.amount), 0) ?? 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <h1 className="page-title">Visão Geral</h1>
 
       {/* ── Row 1: Platform Status ── */}
       <div className="adm-section-header">Status da Plataforma</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
         <KpiCard
           icon={Users}
           label="Usuários"
@@ -209,10 +191,10 @@ export default function AdminOverview() {
         <KpiCard
           icon={CreditCard}
           label="Assinaturas Ativas"
-          value={subsLoading ? "—" : String(subCounts?.active ?? 0)}
+          value={kpisLoading ? "—" : String(kpis?.active_subs ?? 0)}
           delta="ativas"
           color="#06B6D4"
-          loading={subsLoading}
+          loading={kpisLoading}
         />
         <KpiCard
           icon={DollarSign}
@@ -224,9 +206,9 @@ export default function AdminOverview() {
         />
       </div>
 
-      {/* ── Row 2: Stripe & Billing ── */}
+      {/* ── Row 2: Billing & Subscription (via Edge Functions) ── */}
       <div className="adm-section-header">Faturamento & Stripe</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
         <StatusCard icon={Activity} label="Stripe Status">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span className={`status-dot ${stripeSync?.isHealthy ? "green" : "red"}`} />
@@ -237,34 +219,44 @@ export default function AdminOverview() {
           <div style={{ fontSize: 11, color: "var(--adm-text-soft)", fontFamily: "var(--adm-mono)" }}>
             {stripeSync?.lastSync
               ? `Último sync: ${formatDistanceToNow(new Date(stripeSync.lastSync), { addSuffix: true, locale: ptBR })}`
-              : "Sem sync registrado"
-            }
+              : "Sem sync registrado"}
           </div>
         </StatusCard>
 
-        <StatusCard icon={DollarSign} label="Receita Mensal">
-          <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--adm-mono)" }}>
-            {mrrFormatted}
+        <StatusCard icon={Shield} label="Plano Atual">
+          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "var(--adm-mono)" }}>
+            {orgLoading ? "—" : orgDashboard?.plan_name ?? "Sem plano"}
           </div>
-        </StatusCard>
-
-        <StatusCard icon={CheckCircle2} label="Sincronização Stripe">
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-              <span style={{ color: "var(--adm-text-soft)" }}>Banco</span>
-              <span style={{ fontFamily: "var(--adm-mono)", fontWeight: 600 }}>{subCounts?.totalDb ?? "—"}</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
-              {subCounts?.totalDb != null ? (
-                <>
-                  <CheckCircle2 size={14} style={{ color: "var(--adm-green)" }} />
-                  <span style={{ color: "var(--adm-green)", fontWeight: 600 }}>Sincronizado</span>
-                </>
-              ) : (
-                <span style={{ color: "var(--adm-text-soft)" }}>Verificando...</span>
+          {orgSubscription && orgSubscription.status !== "none" && (
+            <div style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>
+              Status: <span style={{ color: orgSubscription.status === "active" ? "var(--adm-green)" : "var(--adm-yellow)", fontWeight: 600 }}>
+                {orgSubscription.status}
+              </span>
+              {orgSubscription.current_period_end && (
+                <> · Até {format(new Date(orgSubscription.current_period_end), "dd/MM/yyyy", { locale: ptBR })}</>
               )}
             </div>
+          )}
+        </StatusCard>
+
+        <StatusCard icon={TrendingUp} label="Créditos Restantes">
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--adm-mono)", color: "var(--adm-accent)" }}>
+              {orgLoading ? "—" : orgDashboard?.total_remaining ?? 0}
+            </span>
+            <span style={{ fontSize: 12, color: "var(--adm-text-soft)" }}>cotas</span>
           </div>
+          {orgDashboard && (
+            <div style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>
+              Plano: {orgDashboard.plan_remaining} · Bônus: {orgDashboard.bonus_remaining}
+            </div>
+          )}
+          {orgDashboard?.last_consumption && (
+            <div style={{ fontSize: 10, color: "var(--adm-text-soft)", display: "flex", alignItems: "center", gap: 4 }}>
+              <Clock size={10} />
+              Último uso: {formatDistanceToNow(new Date(orgDashboard.last_consumption), { addSuffix: true, locale: ptBR })}
+            </div>
+          )}
         </StatusCard>
 
         <StatusCard icon={AlertTriangle} label="Falhas de Pagamento">
@@ -279,21 +271,17 @@ export default function AdminOverview() {
             ) : (
               <>
                 <CheckCircle2 size={18} style={{ color: "var(--adm-green)" }} />
-                <span style={{ fontSize: 13, color: "var(--adm-green)", fontWeight: 600 }}>
-                  Sem falhas
-                </span>
+                <span style={{ fontSize: 13, color: "var(--adm-green)", fontWeight: 600 }}>Sem falhas</span>
               </>
             )}
           </div>
-          <span style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>
-            faturas não pagas
-          </span>
+          <span style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>faturas não pagas</span>
         </StatusCard>
       </div>
 
       {/* ── Row 3: Monitoring ── */}
       <div className="adm-section-header">Monitoramento</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
         <StatusCard icon={FileText} label="Logs (24h)">
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--adm-mono)" }}>
@@ -314,7 +302,7 @@ export default function AdminOverview() {
         <StatusCard icon={Zap} label="Créditos Consumidos Hoje">
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--adm-mono)" }}>
-              {creditUsage?.toLocaleString("pt-BR") ?? "—"}
+              {creditsToday.toLocaleString("pt-BR")}
             </span>
             <span style={{ fontSize: 12, color: "var(--adm-text-soft)" }}>cotas</span>
           </div>
@@ -333,6 +321,47 @@ export default function AdminOverview() {
           </div>
           <span style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>total da plataforma</span>
         </StatusCard>
+      </div>
+
+      {/* ── Usage Table (via Edge Function) ── */}
+      <div className="adm-section-header">Últimos Consumos de IA</div>
+      <div className="table-card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px", borderBottom: "1px solid var(--adm-border)" }}>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>Histórico de Créditos</span>
+        </div>
+        <table>
+          <thead><tr>
+            {["Origem", "Descrição", "Qtd", "Tipo", "Saldo", "Quando"].map(h => <th key={h}>{h}</th>)}
+          </tr></thead>
+          <tbody>
+            {orgUsage && orgUsage.length > 0 ? orgUsage.slice(0, 10).map((tx) => (
+              <tr key={tx.id}>
+                <td>
+                  <span className={`adm-badge ${tx.amount < 0 ? "delete" : "insert"}`} style={{ fontSize: 10 }}>
+                    {tx.origin}
+                  </span>
+                </td>
+                <td style={{ fontSize: 12, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {tx.description ?? "—"}
+                </td>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 12, fontWeight: 600, color: tx.amount < 0 ? "var(--adm-red)" : "var(--adm-green)" }}>
+                  {tx.amount > 0 ? `+${tx.amount}` : tx.amount}
+                </td>
+                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>
+                  {tx.is_bonus ? "Bônus" : "Plano"}
+                </td>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 12 }}>
+                  {tx.balance_after ?? "—"}
+                </td>
+                <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)", color: "var(--adm-text-soft)" }}>
+                  {formatDistanceToNow(new Date(tx.created_at), { addSuffix: true, locale: ptBR })}
+                </td>
+              </tr>
+            )) : (
+              <tr><td colSpan={6} style={{ textAlign: "center", padding: "32px 16px", color: "var(--adm-text-soft)" }}>Nenhum consumo registrado</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* ── Audit Log Table ── */}
