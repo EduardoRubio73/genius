@@ -26,7 +26,7 @@ type PlanForm = {
   display_name: string;
   plan_tier: "free" | "starter" | "pro" | "enterprise";
   unit_amount_brl: string;
-  recurring_interval: "month" | "year";
+  recurring_interval: "day" | "month" | "year";
   sort_order: number;
   is_featured: boolean;
   trial_days: number;
