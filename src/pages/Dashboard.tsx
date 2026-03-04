@@ -414,7 +414,7 @@ export default function Dashboard() {
       </section>
 
       {/* ── Quick access + Referral ── */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: "1100ms", animationFillMode: "backwards" }}>
         <div className="space-y-2">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
             Acesso rápido
