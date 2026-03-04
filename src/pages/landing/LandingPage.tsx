@@ -411,10 +411,13 @@ const handleSubscribe = async (priceId: string | null) => {
         <div className="wrap">
           <div className="tag">Funcionalidades</div>
           <h2 className="sh">Tudo que você precisa para <TypeWriter words={["construir mais rápido", "lançar com IA", "escalar do zero"]} /></h2>
-          <div className="feat-grid">
-            <div className="fc"><div className="fc-i iv">✨</div><div className="fc-t">Gerador de Prompt com IA</div><div className="fc-d">Texto livre → campos estruturados: especialidade, persona, tarefa, objetivo e contexto. Prompt pronto em segundos.</div></div>
+          <div className="feat-grid feat-grid-4">
+            <div className="fc"><div className="fc-i iv">✨</div><div className="fc-t">Gerador de Prompt</div><div className="fc-d">Texto livre → campos estruturados: especialidade, persona, tarefa, objetivo e contexto. Prompt pronto em segundos.</div></div>
             <div className="fc"><div className="fc-i ib">🏗️</div><div className="fc-t">SaaS Builder Wizard</div><div className="fc-d">7 perguntas geram spec técnica completa: stack, banco, arquitetura, segurança e plano de implementação.</div></div>
             <div className="fc"><div className="fc-i ic">⚡</div><div className="fc-t">Modo Misto — 2 outputs</div><div className="fc-d">Um input gera simultaneamente prompt otimizado E spec técnica, retroalimentados automaticamente.</div></div>
+            <div className="fc"><div className="fc-i ip">⚙️</div><div className="fc-t">BUILD Engine</div><div className="fc-d">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div></div>
+          </div>
+          <div className="feat-grid feat-grid-3">
             <div className="fc"><div className="fc-i ig">🎁</div><div className="fc-t">Programa de Indicação</div><div className="fc-d">Compartilhe seu código. Cada amigo que se cadastrar ganha 5 cotas — e você também. Sem limite de indicações.</div></div>
             <div className="fc"><div className="fc-i iv">🎯</div><div className="fc-t">Few-Shot Learning</div><div className="fc-d">O sistema aprende com seus melhores prompts (rating ≥ 4★) e os usa como exemplos nas próximas gerações.</div></div>
             <div className="fc"><div className="fc-i ic">🔌</div><div className="fc-t">7 Plataformas de Destino</div><div className="fc-d">Lovable, ChatGPT, Claude, Gemini, Cursor, v0 e mais. Cada destino com instruções e formato específicos.</div></div>
