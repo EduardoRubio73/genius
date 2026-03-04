@@ -395,31 +395,36 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   <div className="mb-1">
                     <span className="text-sm text-muted-foreground align-top">R$</span>
                     <span className="text-4xl font-extrabold text-foreground ml-1 tracking-tight">
-                      {plan.unit_amount != null ? (plan.unit_amount / 100).toFixed(0) : "0"}
+                  {plan.unit_amount != null ? (plan.unit_amount / 100).toFixed(0) : "0"}
                     </span>
                   </div>
-                  {plan.period_label && (
-                    <p className="text-xs text-muted-foreground mb-1">{plan.period_label}</p>
-                  )}
-                  {plan.trial_label && (
-                    <p className="text-xs text-primary font-medium mb-4 mt-1 inline-flex items-center gap-1">
-                      <Check className="h-3 w-3" /> {plan.trial_label}
-                    </p>
-                  )}
+                  {(() => {
+                    const interval = plan.recurring_interval ?? "mês";
+                    const isUnlimited = plan.plan_tier === "enterprise";
+                    const cl = plan.credits_limit;
+                    const fmt = (cost: number) => isUnlimited ? "Ilimitado" : `${Math.floor(cl / cost)} / ${interval}`;
+                    return (
+                      <>
+                        <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
+                        {plan.trial_period_days && plan.trial_period_days > 0 && (
+                          <p className="text-xs text-primary font-medium mb-4 mt-1 inline-flex items-center gap-1">
+                            <Check className="h-3 w-3" /> {plan.trial_period_days} dias grátis
+                          </p>
+                        )}
 
-                  {plan.total_quotas_label && (
-                    <p className="text-sm font-semibold text-foreground mb-3 mt-2">
-                      {plan.total_quotas_label}
-                    </p>
-                  )}
+                        <p className="text-sm font-semibold text-foreground mb-3 mt-2">
+                          {isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`}
+                        </p>
 
-                  <div className="space-y-2 flex-1 mb-4">
-                    {featureRow(plan.prompts_label, plan.prompts_detail)}
-                    {featureRow(plan.saas_specs_label, plan.saas_specs_detail)}
-                    {featureRow(plan.misto_label, plan.misto_detail)}
-                    {featureRow(plan.build_label, plan.build_detail)}
-                    {featureRow(plan.members_label, null)}
-                  </div>
+                        <div className="space-y-2 flex-1 mb-4">
+                          {featureRow("✨ Prompts (1 cota)", fmt(1))}
+                          {featureRow("🏗️ SaaS Specs (2 cotas)", fmt(2))}
+                          {featureRow("⚡ Modo Misto (2 cotas)", fmt(2))}
+                          {featureRow("⚙️ BUILD Engine (5 cotas)", fmt(5))}
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {isCurrent ? (
                     <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
@@ -431,7 +436,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                       disabled={!plan.stripe_price_id}
                       className="w-full"
                     >
-                      Assinar
+                      {plan.cta_label ?? "Assinar"}
                     </Button>
                   )}
                 </div>

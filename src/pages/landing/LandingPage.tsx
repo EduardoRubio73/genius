@@ -473,6 +473,10 @@ export default function LandingPage() {
             {pricingProducts.map((p) => {
               const price = p.unit_amount != null ? Math.round(p.unit_amount / 100) : 0;
               const colorClass = p.is_featured ? "v" : p.sort_order === 3 ? "g" : p.sort_order === 1 ? "c" : "";
+              const isUnlimited = p.plan_tier === "enterprise";
+              const cl = p.credits_limit;
+              const interval = p.recurring_interval ?? "mês";
+              const fmt = (cost: number) => isUnlimited ? "Ilimitado" : `${Math.floor(cl / cost)} / ${interval}`;
               return (
                 <div key={p.id} className={`pc${p.is_featured ? " feat" : ""}`}>
                   {p.is_featured && <div className="pc-top-badge">⚡ Mais popular</div>}
@@ -480,22 +484,15 @@ export default function LandingPage() {
                   <div className="pc-price" style={p.is_featured ? { background: "linear-gradient(90deg,var(--c),var(--v))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" } : undefined}>
                     <sup>R$</sup>{price}
                   </div>
-                  <div className="pc-period">{p.period_label}</div>
-                  {p.trial_label && <div className="pc-trial">{p.trial_label}</div>}
+                  <div className="pc-period">por {interval}</div>
+                  {p.trial_period_days && p.trial_period_days > 0 && <div className="pc-trial">{p.trial_period_days} dias grátis</div>}
                   <div className="pc-div" />
                   <div className="pc-limits">
-                    <div className="lrow"><span className="ll">✨ Prompts {p.prompts_detail}</span><span className={`lv ${colorClass}`}>{p.prompts_label}</span></div>
-                    <div className="lrow"><span className="ll">🏗️ SaaS Specs {p.saas_specs_detail}</span><span className={`lv ${colorClass}`}>{p.saas_specs_label}</span></div>
-                    <div className="lrow"><span className="ll">⚡ Modo Misto {p.misto_detail}</span><span className={`lv ${colorClass}`}>{p.misto_label}</span></div>
-                    {p.build_label && p.build_label !== "—" ? (
-                      <div className="lrow"><span className="ll">⚙️ BUILD Engine {p.build_detail}</span><span className={`lv ${colorClass}`}>{p.build_label}</span></div>
-                    ) : (
-                      <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv">—</span></div>
-                    )}
-                    {p.members_label && (
-                      <div className="lrow"><span className="ll">👥 Membros</span><span className={`lv ${colorClass}`}>{p.members_label}</span></div>
-                    )}
-                    <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{p.total_quotas_label}</span></div>
+                    <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className={`lv ${colorClass}`}>{fmt(1)}</span></div>
+                    <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className={`lv ${colorClass}`}>{fmt(2)}</span></div>
+                    <div className="lrow"><span className="ll">⚡ Modo Misto (2 cotas)</span><span className={`lv ${colorClass}`}>{fmt(2)}</span></div>
+                    <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className={`lv ${colorClass}`}>{fmt(5)}</span></div>
+                    <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`}</span></div>
                   </div>
                   <ul className="pc-feats">
                     {p.features.map((f, i) => (
