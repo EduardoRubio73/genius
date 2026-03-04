@@ -53,14 +53,15 @@ export default function MistoMode() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
 
-  // Fetch credit balance
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
-    const { data, error } = await supabase.rpc("get_credit_balance", { p_org_id: orgId });
-    if (error || !data?.[0]) return null;
-    const b = data[0] as { total_remaining: number; account_status: string };
-    setCreditBalance(b.total_remaining);
-    return b;
+    try {
+      const b = await callEdgeFunction("org-dashboard", { org_id: orgId });
+      setCreditBalance(b.total_remaining);
+      return b;
+    } catch {
+      return null;
+    }
   }, [orgId]);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
