@@ -1,54 +1,45 @@
 
 
-## Plano: Corrigir layout do Typewriter no Hero + Adicionar ciclo de transparência de custos
+## Fix: Admin Credits Not Saving
 
-### Problema 1: Texto "pula para baixo"
-O `<h1>` do hero usa `line-height: 1.07` e as palavras do typewriter têm tamanhos diferentes. Quando o texto é longo demais (ex: "com IA — e ganhe cotas"), ele quebra para uma segunda linha, empurrando tudo para baixo.
+### Root Causes
 
-### Solução 1: Fixar altura do span do typewriter
-Envolver o `<span className="grad">` em um container com altura fixa (`min-height: 1.1em`) e `display: block` para que independentemente do comprimento do texto, o espaço reservado seja sempre o mesmo. Também encurtar os textos mais longos para caberem em uma linha.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-Palavras atuais: `["com IA — e ganhe cotas", "em segundos, com IA", "e indique, ganhe mais"]`
+### Solution
 
-Palavras novas (mais curtas e uniformes): `["com IA — ganhe cotas", "em segundos, com IA", "e indique amigos", "~R$0,87 por cota"]`
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-Adicionar no CSS do hero h1 um estilo para o container do typewriter:
-```css
-.landing-page .hero .tw-line {
-  display: block;
-  min-height: 1.15em;
-  overflow: hidden;
-}
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-
-### Problema 2: Ciclo de transparência de custos no hero
-Incluir a mensagem de transparência de custos como parte do ciclo do typewriter no hero.
-
-### Solução 2: Reestruturar o hero h1
-Mudar a estrutura do h1 para ciclar entre dois "blocos" de conteúdo, ou mais simplesmente, adicionar frases de custo ao array de palavras do typewriter para que elas apareçam naturalmente no ciclo.
-
-Nova estrutura do h1:
-```
-Crie prompts e SaaS
-[typewriter com palavras curtas + frases de custo]
-indicando amigos
-```
-
-Palavras do typewriter atualizadas:
-```ts
-[
-  "com IA — ganhe cotas",
-  "1 cota ≈ R$0,87",
-  "em segundos, com IA",
-  "BUILD ≈ R$4,35",
-  "e indique amigos",
-]
-```
-
-### Alterações
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/landing/LandingPage.tsx` | Atualizar array de words do hero TypeWriter, envolver em `<span className="tw-line">` |
-| `src/pages/landing/landing.css` | Adicionar `.tw-line` com min-height fixa para evitar reflow |
 
