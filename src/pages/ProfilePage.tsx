@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -243,21 +244,16 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   const { data: products, isLoading: productsLoading } = useBillingProducts();
 
   const subscribe = async (priceId: string) => {
-    const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-      body: { price_id: priceId },
-    });
-
-    if (error) {
+    try {
+      const data = await callEdgeFunction("create-checkout-session", { price_id: priceId });
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error("Não foi possível redirecionar para o checkout.");
+    } catch (err) {
       toast.error("Não foi possível iniciar a assinatura.");
-      return;
     }
-
-    if (data?.url) {
-      window.location.href = data.url;
-      return;
-    }
-
-    toast.error("Não foi possível redirecionar para o checkout.");
   };
 
   // Quota bars

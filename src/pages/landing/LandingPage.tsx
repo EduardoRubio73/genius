@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 import logo from "@/assets/logo-landing.png";
 import "./landing.css";
 
@@ -248,14 +249,12 @@ export default function LandingPage() {
       window.location.href = "/login";
       return;
     }
-    const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-      body: { price_id: priceId },
-    });
-    if (error) {
-      console.error(error);
-      return;
+    try {
+      const data = await callEdgeFunction("create-checkout-session", { price_id: priceId });
+      if (data?.url) window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
     }
-    if (data?.url) window.location.href = data.url;
   };
 
   useEffect(() => {

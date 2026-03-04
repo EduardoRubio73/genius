@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 
 // ─── Users ───
 export function useAdminUsers(page = 0, search = "") {
@@ -289,8 +290,7 @@ export function useUpdateProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
-      const { error } = await supabase.functions.invoke("update-billing-plan", { body: { product_id: id, ...updates } });
-      if (error) throw error;
+      await callEdgeFunction("update-billing-plan", { product_id: id, ...updates });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
@@ -314,8 +314,7 @@ export function useUpdatePrice() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
-      const { error } = await supabase.functions.invoke("update-billing-plan", { body: { price_id: id, ...updates } });
-      if (error) throw error;
+      await callEdgeFunction("update-billing-plan", { price_id: id, ...updates });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-prices"] }),
   });

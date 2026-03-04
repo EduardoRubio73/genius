@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { useToast } from "@/hooks/use-toast";
 import "./admin.css";
 
@@ -57,9 +58,7 @@ export default function AdminStripeSettings() {
 
   const testConnection = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("stripe-test-connection", { body: {} });
-      if (error) throw error;
-      return data;
+      return await callEdgeFunction("stripe-test-connection", {});
     },
   });
 

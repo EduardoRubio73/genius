@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, RefreshCw, Plus, Loader2 } from "lucide-react";
 import "./admin.css";
@@ -88,64 +89,56 @@ export default function AdminBillingPlans() {
 
   const createPlan = useMutation({
     mutationFn: async (payload: PlanForm) => {
-      const { error } = await supabase.functions.invoke("create-billing-plan", {
-        body: {
-          name: payload.name,
-          display_name: payload.display_name,
-          plan_tier: payload.plan_tier,
-          unit_amount: Math.round(Number(payload.unit_amount_brl) * 100),
-          recurring_interval: payload.recurring_interval,
-          sort_order: payload.sort_order,
-          is_featured: payload.is_featured,
-          trial_days: payload.trial_days,
-          credits_limit: payload.credits_limit,
-          members_limit: payload.members_limit,
-          is_active: payload.is_active,
-          credit_unit_cost: payload.credit_unit_cost,
-          prompt_cost: payload.prompt_cost,
-          saas_specs_cost: payload.saas_specs_cost,
-          modo_misto_cost: payload.modo_misto_cost,
-          build_engine_cost: payload.build_engine_cost,
-        },
+      await callEdgeFunction("create-billing-plan", {
+        name: payload.name,
+        display_name: payload.display_name,
+        plan_tier: payload.plan_tier,
+        unit_amount: Math.round(Number(payload.unit_amount_brl) * 100),
+        recurring_interval: payload.recurring_interval,
+        sort_order: payload.sort_order,
+        is_featured: payload.is_featured,
+        trial_days: payload.trial_days,
+        credits_limit: payload.credits_limit,
+        members_limit: payload.members_limit,
+        is_active: payload.is_active,
+        credit_unit_cost: payload.credit_unit_cost,
+        prompt_cost: payload.prompt_cost,
+        saas_specs_cost: payload.saas_specs_cost,
+        modo_misto_cost: payload.modo_misto_cost,
+        build_engine_cost: payload.build_engine_cost,
       });
-      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] }),
   });
 
   const updatePlan = useMutation({
     mutationFn: async (payload: PlanForm) => {
-      const { error } = await supabase.functions.invoke("update-billing-plan", {
-        body: {
-          product_id: payload.product_id,
-          name: payload.name,
-          display_name: payload.display_name,
-          plan_tier: payload.plan_tier,
-          unit_amount: Math.round(Number(payload.unit_amount_brl) * 100),
-          recurring_interval: payload.recurring_interval,
-          sort_order: payload.sort_order,
-          is_featured: payload.is_featured,
-          trial_days: payload.trial_days,
-          credits_limit: payload.credits_limit,
-          members_limit: payload.members_limit,
-          is_active: payload.is_active,
-          credit_unit_cost: payload.credit_unit_cost,
-          prompt_cost: payload.prompt_cost,
-          saas_specs_cost: payload.saas_specs_cost,
-          modo_misto_cost: payload.modo_misto_cost,
-          build_engine_cost: payload.build_engine_cost,
-        },
+      await callEdgeFunction("update-billing-plan", {
+        product_id: payload.product_id,
+        name: payload.name,
+        display_name: payload.display_name,
+        plan_tier: payload.plan_tier,
+        unit_amount: Math.round(Number(payload.unit_amount_brl) * 100),
+        recurring_interval: payload.recurring_interval,
+        sort_order: payload.sort_order,
+        is_featured: payload.is_featured,
+        trial_days: payload.trial_days,
+        credits_limit: payload.credits_limit,
+        members_limit: payload.members_limit,
+        is_active: payload.is_active,
+        credit_unit_cost: payload.credit_unit_cost,
+        prompt_cost: payload.prompt_cost,
+        saas_specs_cost: payload.saas_specs_cost,
+        modo_misto_cost: payload.modo_misto_cost,
+        build_engine_cost: payload.build_engine_cost,
       });
-      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] }),
   });
 
   const syncStripe = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("stripe-sync-products", { body: {} });
-      if (error) throw error;
-      return data;
+      return await callEdgeFunction("stripe-sync-products", {});
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] });
