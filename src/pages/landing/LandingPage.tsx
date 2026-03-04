@@ -36,7 +36,7 @@ const TERMS_CONTENT =
     <p>Ao criar uma conta ou utilizar qualquer funcionalidade da plataforma Prompt Genius SaaS Builder ("Plataforma"), você ("Usuário") declara que leu, compreendeu e concorda com os presentes Termos de Uso ("Termos"). Caso não concorde com qualquer disposição, não utilize a Plataforma.</p>
 
     <h3>2. Descrição do Serviço</h3>
-    <p>O Prompt Genius SaaS Builder é uma plataforma de geração de prompts e especificações técnicas assistida por Inteligência Artificial. A Plataforma oferece três modos principais: Gerador de Prompt, SaaS Builder Wizard e Modo Misto.</p>
+    <p>O Prompt Genius SaaS Builder é uma plataforma de geração de prompts e especificações técnicas assistida por Inteligência Artificial. A Plataforma oferece quatro modos principais: Gerador de Prompt, SaaS Builder Wizard, Modo Misto e BUILD Engine.</p>
 
     <h3>3. Cadastro e Conta</h3>
     <p>3.1. Para acessar os recursos da Plataforma, é necessário criar uma conta com e-mail válido e senha.</p>
@@ -366,7 +366,7 @@ const handleSubscribe = async (priceId: string | null) => {
           <span className="tw-line"><span className="grad"><TypeWriter words={["com IA — ganhe cotas", "1 cota ≈ R$0,87", "em segundos, com IA", "BUILD ≈ R$4,35", "e indique amigos"]} /></span></span>
           <br />indicando amigos
         </h1>
-        <p className="hero-sub">Três modos de IA para gerar prompts perfeitos e especificações técnicas completas. Indique um amigo e ambos ganham 5 cotas extras gratuitamente.</p>
+        <p className="hero-sub">Quatro modos de IA para gerar prompts perfeitos e especificações técnicas completas. Indique um amigo e ambos ganham 5 cotas extras gratuitamente.</p>
         <div className="hero-acts">
           <button className="btn-p" onClick={() => navigate("/login")}>Começar Grátis — 7 dias →</button>
           <a href="#indicacao" className="btn-o">Ver programa de indicação</a>
@@ -426,11 +426,11 @@ const handleSubscribe = async (priceId: string | null) => {
       <section className="modes rv">
         <div className="wrap">
           <div className="tag">Como funciona</div>
-          <h2 className="sh">Três modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
+          <h2 className="sh">Quatro modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
           <div className="modes-grid">
             <div className="mc mc-p"><div className="mc-badge mb-pop">Mais usado</div><div className="mc-icon">✨</div><div className="mc-title">Gerador de Prompt</div><div className="mc-desc">Escreva sua ideia. A IA distribui em especialidade, persona, tarefa, objetivo e contexto. Copie o prompt pronto.</div><div className="mc-pill"><strong>1 cota</strong> por geração</div><div className="mc-n">01</div></div>
             <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">02</div></div>
-            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos três modos.</div><div className="mc-pill"><strong>3 cotas</strong> por sessão</div><div className="mc-n">03</div></div>
+            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos quatro modos.</div><div className="mc-pill"><strong>3 cotas</strong> por sessão</div><div className="mc-n">03</div></div>
             <div className="mc mc-m"><div className="mc-badge mb-new">PRO 🚀</div><div className="mc-icon">⚙️</div><div className="mc-title">BUILD Engine</div><div className="mc-desc">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div><div className="mc-pill"><strong>5 cotas</strong> por projeto</div><div className="mc-n">04</div></div>
           </div>
         </div>
