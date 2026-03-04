@@ -69,11 +69,13 @@ export default function SaasMode() {
 
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
-    const { data, error } = await supabase.rpc("get_credit_balance", { p_org_id: orgId });
-    if (error || !data?.[0]) return null;
-    const b = data[0] as { total_remaining: number; account_status: string };
-    setCreditBalance(b.total_remaining);
-    return b;
+    try {
+      const b = await callEdgeFunction("org-dashboard", { org_id: orgId });
+      setCreditBalance(b.total_remaining);
+      return b;
+    } catch {
+      return null;
+    }
   }, [orgId]);
 
   const updateAnswers = (partial: Partial<SaasAnswers>) => setAnswers(prev => ({ ...prev, ...partial }));
@@ -144,8 +146,9 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
 
       setSpecMarkdown(specData.spec_md || "");
 
-      // Consume credit
-      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: currentSessionId });
+      // Consume credit via edge function
+      const creditResult = await callEdgeFunction("consume-credit", { org_id: orgId, user_id: user.id, session_id: currentSessionId });
+      if (creditResult.error) { setCreditModal(creditResult.error); setStep(7); return; }
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");

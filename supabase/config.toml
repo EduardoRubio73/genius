@@ -20,3 +20,15 @@ verify_jwt = false
 
 [functions.stripe-test-connection]
 verify_jwt = false
+
+[functions.org-dashboard]
+verify_jwt = false
+
+[functions.org-usage]
+verify_jwt = false
+
+[functions.org-subscription]
+verify_jwt = false
+
+[functions.consume-credit]
+verify_jwt = false
