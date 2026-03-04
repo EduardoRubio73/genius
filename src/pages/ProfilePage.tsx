@@ -280,8 +280,14 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
       {/* Quota bar */}
       <div className="max-w-2xl">
         <div className="rounded-xl border border-border/60 p-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Cotas do Plano
+          <div className="flex items-center gap-1.5 mb-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Cotas do Plano
+            </p>
+            <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-3">
+            As cotas são compartilhadas entre todas as ações. Combine prompts, SaaS Specs e builds livremente.
           </p>
           {quotaLoading ? (
             <Skeleton className="h-10 w-full" />
@@ -366,8 +372,14 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                       <>
                         <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
 
-                        <p className="text-sm font-semibold text-foreground mb-3 mt-2">
-                          {`${plan.credits_limit} cotas / ${interval}`}
+                         <div className="flex items-center gap-1.5 mb-3 mt-2">
+                          <p className="text-sm font-semibold text-foreground">
+                            {`${plan.credits_limit} cotas / ${interval}`}
+                          </p>
+                          <InfoTooltip content="As ações consomem cotas do total mensal. Exemplo: 1 Build (5 cotas) equivale a 5 Prompts." />
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mb-2">
+                          Cotas compartilhadas entre todas as ações
                         </p>
 
                         <div className="space-y-2 flex-1 mb-4">
