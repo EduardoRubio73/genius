@@ -233,7 +233,7 @@ function QuickActionCard({
   return (
     <button
       onClick={() => navigate(href)}
-      className="flex items-center gap-3 p-4 rounded-xl border border-border/60 bg-card/50 hover:bg-card hover:border-border hover:shadow-md text-left transition-all duration-200 group w-full"
+      className="flex items-center gap-3 p-4 rounded-xl border bg-card hover:shadow-xl shadow-md text-left transition-all duration-300 group w-full"
     >
       <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted", accent)}>
         <Icon className="h-4 w-4" />
