@@ -1,58 +1,45 @@
 
 
-## Plano: Corrigir UI de cotas após upgrade + reset de créditos no webhook
+## Fix: Admin Credits Not Saving
 
-### Problema
-Após upgrade, `v_user_plan_balance` retorna `credits_used = credits_limit` porque o contador não foi zerado. A UI mostra barra vermelha e badge "ESGOTADO" mesmo com assinatura ativa.
+### Root Causes
 
-### Parte 1 — Frontend: `useQuotaBalance.ts`
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-Incluir `subscription_status` da view no retorno e ajustar a lógica de exibição:
+### Solution
 
-```ts
-subscription_status: data.subscription_status ?? null,
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-
-Recalcular `credits_used` / `credits_remaining` / `percent_used` quando a assinatura está ativa mas os créditos não foram resetados (edge case pós-checkout):
-
-```ts
-// Se assinatura ativa e used >= limit, considerar como novo ciclo (reset pendente)
-const isNewCycleNotReset = 
-  data.subscription_status === 'active' && 
-  creditsUsed >= creditsLimit && 
-  creditsLimit > 0;
-
-if (isNewCycleNotReset) {
-  creditsUsed = 0;
-  creditsRemaining = creditsLimit;
-  percentUsed = 0;
-}
-```
-
-### Parte 2 — Frontend: `QuotaCard.tsx`
-
-Badge "ESGOTADO" — já funciona corretamente pois depende de `creditsRemaining <= 0`, que será corrigido pelo hook.
-
-### Parte 3 — Frontend: `Dashboard.tsx`
-
-`noQuota` já depende de `quota.credits_remaining`, que será corrigido pelo hook. Sem mudança necessária.
-
-### Parte 4 — Backend: Edge Function `create-checkout-session`
-
-Após criar a sessão de checkout com sucesso (ou no retorno do webhook), resetar `plan_credits_used` na tabela `organizations`. Como o webhook Stripe ainda não existe, adicionar o reset diretamente na edge function `create-checkout-session` não resolve (o pagamento ainda não foi confirmado).
-
-**Solução correta**: Criar/atualizar a edge function que processa o webhook Stripe (`stripe-sync`) para resetar créditos quando `checkout.session.completed` ou `invoice.payment_succeeded` for recebido.
-
-### Arquivos alterados
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/hooks/useQuotaBalance.ts` | Adicionar `subscription_status`, detectar ciclo novo sem reset e zerar contadores |
-| `supabase/functions/stripe-sync/index.ts` | Adicionar reset de `plan_credits_used = 0` no evento `checkout.session.completed` |
-
-### Resultado esperado
-- Barra volta a 0% após upgrade
-- Badge "ESGOTADO" desaparece
-- Créditos exibem 0/56 usadas, 56 restantes
-- Webhook garante reset real no banco para próximos acessos
 
