@@ -193,10 +193,10 @@ function UsageProgressBar({ used, limit, className }: { used: number; limit: num
   const pct = limit > 0 ? Math.min(100, Math.max(0, (used / limit) * 100)) : 0;
 
   const barColor =
-    pct >= 100 ? "from-destructive to-destructive" :
-    pct >= 80 ? "from-yellow-400 to-yellow-500" :
-    pct >= 50 ? "from-yellow-300 to-yellow-400" :
-    "from-primary to-primary";
+    pct >= 90 ? "from-red-500 to-red-600" :
+    pct >= 75 ? "from-orange-400 to-orange-500" :
+    pct >= 50 ? "from-yellow-400 to-yellow-500" :
+    "from-green-400 to-green-600";
 
   return (
     <div className={cn("space-y-1.5", className)}>
