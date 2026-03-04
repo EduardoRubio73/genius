@@ -10,6 +10,8 @@ import { useOrgStats } from "@/hooks/useOrgStats";
 import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import ReferralBonusCard from "@/components/referral/ReferralBonusCard";
+import { cn } from "@/lib/utils";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
