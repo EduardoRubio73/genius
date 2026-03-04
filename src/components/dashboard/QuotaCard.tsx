@@ -25,8 +25,10 @@ export function QuotaCard({
   creditsLimit,
   creditsRemaining,
   percentUsed,
+  extraCredits = 0,
   loading = false,
 }: QuotaCardProps) {
+  const totalRemaining = creditsRemaining + extraCredits;
   const barColor =
     percentUsed >= 100 ? "bg-destructive" : percentUsed >= 80 ? "bg-yellow-500" : "bg-primary";
 
