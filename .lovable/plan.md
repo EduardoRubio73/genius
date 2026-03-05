@@ -1,48 +1,45 @@
 
 
-## Plano: Corrigir exibição do plano no Dashboard
+## Fix: Admin Credits Not Saving
 
-### Causa raiz
-A edge function `org-dashboard` obtém o `plan_name` exclusivamente da tabela `billing_subscriptions → billing_prices → billing_products`. Se não houver assinatura ativa vinculada, `plan_name` retorna `null`, e o frontend exibe "Free" como fallback.
+### Root Causes
 
-Porém, a tabela `organizations` já possui o campo `plan_tier` correto (ex: "starter"), que é sincronizado pelo trigger `sync_org_plan`. Este campo não está sendo utilizado.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-### Correção
+### Solution
 
-**Arquivo:** `supabase/functions/org-dashboard/index.ts` (linha 70)
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-Alterar a lógica de `planName` para usar `org.plan_tier` como fallback quando não há subscription:
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-```ts
-// Antes:
-const planName = sub?.billing_prices?.billing_products?.display_name 
-  ?? sub?.billing_prices?.billing_products?.name 
-  ?? null;
+### Files to Edit
 
-// Depois:
-const planName = sub?.billing_prices?.billing_products?.display_name 
-  ?? sub?.billing_prices?.billing_products?.name 
-  ?? org.plan_tier 
-  ?? null;
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-
-Isso garante que mesmo sem subscription ativa, o `plan_tier` da organização ("starter", "pro", etc.) será exibido.
-
-**Arquivo:** `src/pages/Dashboard.tsx` (linhas 320, 337)
-
-Ajustar o fallback para capitalizar o plan_tier (que vem em lowercase):
-
-```ts
-// Helper para capitalizar
-const displayPlan = (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase());
-```
-
-Usar `displayPlan` nos dois pontos onde aparece `quota?.plan_name ?? "Free"`.
-
-### Arquivos
-
-| Arquivo | Ação |
-|---------|------|
-| `supabase/functions/org-dashboard/index.ts` | Editar — fallback para `org.plan_tier` |
-| `src/pages/Dashboard.tsx` | Editar — capitalizar plan name |
 
