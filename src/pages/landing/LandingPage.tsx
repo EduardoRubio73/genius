@@ -680,7 +680,6 @@ const handleSubscribe = async (priceId: string | null) => {
         <div className="flinks">
           <button onClick={() => setModal("terms")}>Termos</button>
           <button onClick={() => setModal("privacy")}>Privacidade</button>
-          <button onClick={() => setModal("contact")}>Contato</button>
         </div>
       </footer>
 
