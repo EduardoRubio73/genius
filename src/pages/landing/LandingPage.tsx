@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
+import { toast } from "sonner";
 import logo from "@/assets/logo-landing.png";
+import logoZr from "@/assets/logo-zragency.png";
 import "./landing.css";
 
 interface PricingProduct {
