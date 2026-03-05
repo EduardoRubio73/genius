@@ -317,7 +317,7 @@ export default function Dashboard() {
               planBadgeClasses
             )}>
               <Crown className="w-3.5 h-3.5" />
-              Plano {quota?.plan_name ?? "Free"}
+              Plano {(quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase())}
             </div>
           </div>
         )}
