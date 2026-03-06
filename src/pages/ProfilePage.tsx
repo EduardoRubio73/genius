@@ -9,7 +9,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { supabase } from "@/integrations/supabase/client";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
-import ReferralBonusCard from "@/components/referral/ReferralBonusCard";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -472,10 +472,6 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
         )}
       </div>
 
-      {/* Referral */}
-      <div className="max-w-2xl">
-        <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} orgId={orgId} />
-      </div>
 
       {/* Credit Packs — ABOVE plans */}
       <div className="rounded-xl border bg-card p-6 shadow-sm">
