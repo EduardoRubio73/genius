@@ -640,6 +640,42 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   );
 }
 
+// ── Main Page ──
+export default function ProfilePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { data: profile, refetch } = useProfile(user?.id);
+  const orgId = profile?.personal_org_id;
+
+  const { data: org } = useQuery({
+    queryKey: ["org-for-profile", orgId],
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("organizations")
+        .select("plan_tier")
+        .eq("id", orgId!)
+        .single();
+      return data;
+    },
+  });
+
+  const activeTab = (searchParams.get("tab") as TabKey) || "profile";
+  const setTab = (tab: TabKey) => setSearchParams({ tab });
+
+  return (
+    <AppShell
+      userName={profile?.full_name}
+      userEmail={profile?.email}
+      avatarUrl={profile?.avatar_url}
+      onSignOut={signOut}
+    >
+      <section className="mb-6">
+        <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Minha conta</h1>
+      </section>
+
+      <div className="flex flex-col gap-6 sm:flex-row">
         <AccountSidebar
           activeTab={activeTab}
           onTabChange={setTab}
