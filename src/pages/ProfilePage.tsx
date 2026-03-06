@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard, Coins, Loader2, Mail, ShieldAlert, Gift } from "lucide-react";
+import { Upload, Save, Check, Coins, Loader2, ShieldAlert } from "lucide-react";
+import { AccountSidebar, type AccountTabKey } from "@/components/layout/AccountSidebar";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
