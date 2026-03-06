@@ -1,45 +1,48 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Suporte, Campos de Perfil, Desativação de Conta e Verificação no Login
 
-### Root Causes
+### 1. Botão "Suporte" no Sidebar do Perfil
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+**Arquivo:** `src/pages/ProfilePage.tsx` (nav, linhas 553-577)
 
-### Solution
+Adicionar botão "Suporte" com ícone `Mail` após os tabs existentes. Ao clicar, abre `mailto:zragencyia@gmail.com` com assunto e corpo pré-preenchidos usando dados do perfil (`profile.full_name`, `profile.email`, data atual).
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### 2. Campos adicionais no ProfileTab
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+**Arquivo:** `src/pages/ProfilePage.tsx` (ProfileTab, linhas 70-115)
 
-### Files to Edit
+- Adicionar campo editável "Celular" (já existe coluna `celular` na tabela `profiles`)
+- Adicionar exibição visual do status da conta (ativo/inativo) como badge read-only, obtido da organização (`account_status`)
+- Salvar celular junto com `full_name` no `handleSave`
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+### 3. Funcionalidade "Desativar Conta"
 
-### Details
+**Arquivo:** `src/pages/ProfilePage.tsx` (ProfileTab)
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+- Adicionar botão "Desativar Conta" (vermelho) no final do card de perfil
+- Modal de confirmação usando `AlertDialog` com texto de aviso
+- Ao confirmar:
+  - Chamar `supabase.from("profiles").update({ ativo: false })` (coluna já existe)
+  - Fazer signOut
+  - Redirecionar para `/`
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+### 4. Verificação de conta inativa no Login
+
+**Arquivo:** `src/pages/Login.tsx`
+
+Após login bem-sucedido, verificar `profiles.ativo`:
+- Se `ativo = true` → prosseguir normalmente
+- Se `ativo = false` → exibir modal com opções:
+  - "Solicitar reativação" → abre `mailto:zragencyia@gmail.com` com email de solicitação pré-preenchido, depois faz signOut
+  - "Sair" → signOut e redirecionar
+
+### Resumo de alterações
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/ProfilePage.tsx` | Botão suporte na nav, campo celular, badge status, botão desativar com modal |
+| `src/pages/Login.tsx` | Verificar `ativo` pós-login, modal de reativação |
+
+Nenhuma migração necessária — as colunas `celular` e `ativo` já existem na tabela `profiles`.
 
