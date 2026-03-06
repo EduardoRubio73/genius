@@ -1,45 +1,42 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Card colapsável para Resumo + Acesso Rápido
 
-### Root Causes
+### Objetivo
+Envolver as seções "Resumo da Conta", "Uso do Período", "Estatísticas" e "Acesso Rápido + Referral" dentro de um único `Collapsible` (Radix), **recolhido por padrão**. A seção "Modos disponíveis" permanece fora, sem collapsible.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Alterações
 
-### Solution
+**Arquivo:** `src/pages/Dashboard.tsx`
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
-
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
-
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
+1. Importar `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` de `@/components/ui/collapsible` e `ChevronDown` de `lucide-react`
+2. Adicionar state `const [detailsOpen, setDetailsOpen] = useState(false)`
+3. Envolver as seções (Resumo da Conta, Uso do Período, Estatísticas, banner upgrade, Acesso Rápido + Referral) em:
 
 ```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+<Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+  <div className="rounded-xl border bg-card p-5 shadow-md mb-6">
+    <CollapsibleTrigger className="flex items-center justify-between w-full">
+      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        Resumo da Conta & Acesso Rápido
+      </p>
+      <ChevronDown className={cn("h-4 w-4 transition-transform", detailsOpen && "rotate-180")} />
+    </CollapsibleTrigger>
+    <CollapsibleContent className="mt-4 space-y-6">
+      {/* Resumo da Conta cards */}
+      {/* Uso do Período */}
+      {/* Estatísticas */}
+      {/* Upgrade banner (condicional) */}
+      {/* Acesso Rápido + Referral */}
+    </CollapsibleContent>
+  </div>
+</Collapsible>
 ```
+
+4. Mover o conteúdo interno de cada seção para dentro do `CollapsibleContent`, removendo os wrappers `<section className="mb-6">` individuais (já que o espaçamento será feito pelo `space-y-6` do content)
+5. Manter a seção "Modos disponíveis" exatamente como está, fora do collapsible
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/Dashboard.tsx` | Adicionar Collapsible wrapper, reorganizar seções, manter Modos fora |
 
