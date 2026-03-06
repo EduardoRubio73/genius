@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,15 +6,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import logo from "@/assets/logo.png";
+
+function buildReactivationMailto(name: string, email: string, userId: string) {
+  const now = new Date().toLocaleString("pt-BR");
+  const subject = encodeURIComponent(`Solicitação de Reativação - ${name || "Usuário"}`);
+  const body = encodeURIComponent(
+`Olá equipe de suporte,
+
+O usuário ${name || "N/A"} (${email}) solicitou REATIVAÇÃO da conta.
+
+Dados:
+• ID: ${userId}
+• Data da solicitação: ${now}
+
+Aguardando aprovação manual.
+
+---
+Sistema Genius`
+  );
+  return `mailto:zragencyia@gmail.com?subject=${subject}&body=${body}`;
+}
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inactiveModal, setInactiveModal] = useState(false);
+  const [inactiveUser, setInactiveUser] = useState<{ name: string; email: string; id: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -22,6 +51,21 @@ export default function Login() {
   useEffect(() => {
     if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
+
+  const checkAccountActive = async (userId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("ativo, full_name, email")
+      .eq("id", userId)
+      .single();
+
+    if (data && data.ativo === false) {
+      setInactiveUser({ name: data.full_name ?? "", email: data.email, id: userId });
+      setInactiveModal(true);
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +81,18 @@ export default function Login() {
         if (error) throw error;
         toast({ title: "Conta criada!", description: "Verifique seu email para confirmar." });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+
+        // Check if account is active
+        if (authData.user) {
+          const isActive = await checkAccountActive(authData.user.id);
+          if (!isActive) {
+            await supabase.auth.signOut();
+            return;
+          }
+        }
+
         navigate("/dashboard");
       }
     } catch (err: any) {
@@ -46,6 +100,19 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReactivationRequest = () => {
+    if (inactiveUser) {
+      window.location.href = buildReactivationMailto(inactiveUser.name, inactiveUser.email, inactiveUser.id);
+    }
+    setInactiveModal(false);
+  };
+
+  const handleInactiveExit = async () => {
+    await supabase.auth.signOut();
+    setInactiveModal(false);
+    setInactiveUser(null);
   };
 
   return (
@@ -105,6 +172,29 @@ export default function Login() {
           </button>
         </p>
       </div>
+
+      {/* Inactive Account Modal */}
+      <Dialog open={inactiveModal} onOpenChange={setInactiveModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>🔒 Sua conta está INATIVA</DialogTitle>
+            <DialogDescription className="space-y-3 text-left pt-2">
+              <p>Sua conta foi desativada. Para voltar a usar a plataforma, é necessário solicitar reativação à equipe de suporte.</p>
+              <p className="text-xs text-muted-foreground">
+                Após a solicitação, aguarde aprovação da equipe (24-48h). Você receberá um email de confirmação.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={handleInactiveExit} className="w-full sm:w-auto">
+              Não, sair
+            </Button>
+            <Button onClick={handleReactivationRequest} className="w-full sm:w-auto">
+              Sim, solicitar reativação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

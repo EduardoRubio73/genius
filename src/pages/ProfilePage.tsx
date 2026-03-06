@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard, Coins, Loader2 } from "lucide-react";
+import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard, Coins, Loader2, Mail, ShieldAlert } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +16,18 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -31,14 +43,21 @@ type TabKey = (typeof TABS)[number]["key"];
 // ── Profile Tab ──
 function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: any; onRefresh: () => void }) {
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
+  const [celular, setCelular] = useState(profile?.celular?.toString() ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? "");
   const [saving, setSaving] = useState(false);
+  const [deactivating, setDeactivating] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   useEffect(() => {
     setFullName(profile?.full_name ?? "");
     setAvatarUrl(profile?.avatar_url ?? "");
+    setCelular(profile?.celular?.toString() ?? "");
   }, [profile]);
+
+  const isActive = profile?.ativo !== false;
 
   const initials = fullName
     ? fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -60,11 +79,24 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
 
   const handleSave = async () => {
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ full_name: fullName }).eq("id", userId);
+    const { error } = await supabase.from("profiles").update({
+      full_name: fullName,
+      celular: celular ? Number(celular) : null,
+    }).eq("id", userId);
     setSaving(false);
     if (error) { toast.error("Erro ao salvar"); return; }
     toast.success("Perfil atualizado!");
     onRefresh();
+  };
+
+  const handleDeactivate = async () => {
+    setDeactivating(true);
+    const { error } = await supabase.from("profiles").update({ ativo: false }).eq("id", userId);
+    setDeactivating(false);
+    if (error) { toast.error("Erro ao desativar conta"); return; }
+    toast.success("Conta desativada.");
+    await signOut();
+    navigate("/");
   };
 
   return (
@@ -84,6 +116,9 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
           <div>
             <p className="text-sm font-semibold text-foreground">{fullName || "Seu nome"}</p>
             <p className="text-xs text-muted-foreground">{profile?.email}</p>
+            <Badge variant={isActive ? "default" : "destructive"} className="mt-1">
+              {isActive ? "✅ Ativo" : "❌ Inativo"}
+            </Badge>
           </div>
         </div>
 
@@ -103,6 +138,20 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
           <Input value={profile?.email ?? ""} disabled className="opacity-60" />
         </div>
 
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="celular">📱 Celular</Label>
+            <InfoTooltip content="Número de telefone para contato. Somente números." />
+          </div>
+          <Input
+            id="celular"
+            value={celular}
+            onChange={(e) => setCelular(e.target.value.replace(/\D/g, ""))}
+            placeholder="11999999999"
+            inputMode="numeric"
+          />
+        </div>
+
         <button
           onClick={handleSave}
           disabled={saving}
@@ -110,6 +159,50 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
         >
           <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar alterações"}
         </button>
+      </div>
+
+      {/* Deactivate Account */}
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 shadow-sm max-w-lg">
+        <h3 className="text-sm font-bold text-destructive mb-2 flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4" /> Zona de perigo
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Ao desativar sua conta, você perderá acesso a todas as funcionalidades. Para reativar, será necessário contatar o suporte.
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              Desativar Conta
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL</AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2 text-left">
+                <p>Desativar sua conta impedirá:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Acesso a todas as funcionalidades</li>
+                  <li>Execução de qualquer ação</li>
+                  <li>Recuperação automática</li>
+                </ul>
+                <p className="mt-2">
+                  Para reativar, envie email para <strong>zragencyia@gmail.com</strong>.
+                </p>
+                <p className="font-semibold mt-3">Tem certeza que deseja continuar?</p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeactivate}
+                disabled={deactivating}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deactivating ? "Desativando..." : "Desativar Definitivamente"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -219,6 +312,7 @@ interface BillingProduct {
   is_featured: boolean;
   sort_order: number;
   stripe_price_id: string | null;
+  plan_tier: string | null;
 }
 
 function useBillingProducts() {
@@ -243,6 +337,7 @@ function useBillingProducts() {
         is_featured: Boolean(p.is_featured),
         sort_order: Number(p.sort_order ?? 0),
         stripe_price_id: p.stripe_price_id ?? null,
+        plan_tier: p.plan_tier ?? null,
       })) as BillingProduct[];
     },
   });
@@ -263,7 +358,9 @@ function useCreditPacks() {
   });
 }
 
-function BillingTab({ orgId }: { orgId: string | undefined }) {
+const TIER_ORDER: Record<string, number> = { free: 0, starter: 1, pro: 2, enterprise: 3 };
+
+function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: string | undefined }) {
   const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
   const { data: products, isLoading: productsLoading } = useBillingProducts();
   const { data: packs, isLoading: packsLoading } = useCreditPacks();
@@ -273,6 +370,9 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   const subscriptionPlans = (products ?? []).filter(
     (p) => !(p.name ?? "").toLowerCase().startsWith("topup") && !(p.display_name ?? "").toLowerCase().startsWith("topup")
   );
+
+  const userTierName = (planName ?? quota?.plan_name ?? "free").toLowerCase();
+  const userTierOrder = TIER_ORDER[userTierName] ?? 0;
 
   const subscribe = async (priceId: string) => {
     try {
@@ -324,8 +424,22 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
     );
   };
 
+  const displayPlanName = (planName ?? quota?.plan_name ?? "Free");
+  const capitalizedPlan = displayPlanName.charAt(0).toUpperCase() + displayPlanName.slice(1);
+
   return (
     <div className="space-y-8">
+      {/* Current plan highlight */}
+      <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 max-w-2xl flex items-center gap-3">
+        <div className="rounded-full bg-primary p-2">
+          <CreditCard className="h-5 w-5 text-primary-foreground" />
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Seu plano atual</p>
+          <p className="text-lg font-bold text-primary">{capitalizedPlan}</p>
+        </div>
+      </div>
+
       {/* Quota bar */}
       <div className="rounded-xl border bg-card p-6 shadow-sm max-w-2xl">
         <div className="flex items-center gap-1.5 mb-3">
@@ -422,7 +536,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
         )}
       </div>
 
-      {/* Plans — filtered, no topups */}
+      {/* Plans — filtered, no topups, block downgrade */}
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-bold text-foreground mb-4">Planos disponíveis</h2>
         {productsLoading ? (
@@ -432,13 +546,18 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
             {subscriptionPlans.map((plan) => {
-              const isCurrent = (plan.display_name ?? "").toLowerCase() === (quota?.plan_name ?? "").toLowerCase();
+              const planTierKey = (plan.plan_tier ?? plan.name ?? "").toLowerCase();
+              const planTierOrder = TIER_ORDER[planTierKey] ?? 0;
+              const isCurrent = planTierKey === userTierName;
+              const isDowngrade = planTierOrder < userTierOrder;
+              const canSubscribe = planTierOrder > userTierOrder;
+
               return (
                 <div
                   key={`${plan.display_name}-${plan.sort_order}`}
                   className={cn(
                     "rounded-xl border p-5 transition-colors flex flex-col",
-                    isCurrent ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border/60 bg-card/50",
+                    isCurrent ? "border-primary bg-primary/5 ring-2 ring-primary/40" : "border-border/60 bg-card/50",
                     plan.is_featured && !isCurrent && "border-primary/40 ring-1 ring-primary/20"
                   )}
                 >
@@ -454,7 +573,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   {/* Plan name */}
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                      {plan.display_name ?? "Plano"}
+                      {plan.display_name ?? plan.name ?? "Plano"}
                     </h3>
                     {isCurrent && (
                       <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">
@@ -502,21 +621,21 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
 
                   {isCurrent ? (
                     <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
-                      Plano atual
+                      ✅ Plano atual
                     </div>
-                  ) : Number(plan.price_brl) === 0 ? (
+                  ) : isDowngrade || planTierOrder === 0 ? (
                     <div className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs font-medium text-muted-foreground">
-                      Plano gratuito
+                      {planTierOrder === 0 ? "Plano gratuito" : "Downgrade indisponível"}
                     </div>
-                  ) : (
+                  ) : canSubscribe ? (
                     <Button
                       onClick={() => subscribe(plan.stripe_price_id ?? "")}
                       disabled={!plan.stripe_price_id}
                       className="w-full"
                     >
-                      Assinar
+                      Fazer Upgrade
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
@@ -527,6 +646,30 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   );
 }
 
+// ── Support mailto helper ──
+function buildSupportMailto(name: string, email: string) {
+  const now = new Date().toLocaleString("pt-BR");
+  const subject = encodeURIComponent(`À equipe de suporte da Genius - ${name || "Usuário"}`);
+  const body = encodeURIComponent(
+`Olá equipe de suporte,
+
+Nome: ${name || "N/A"}
+Email: ${email || "N/A"}
+Data: ${now}
+
+Preciso de ajuda técnica com:
+
+[Escreva sua mensagem aqui...]
+
+Prints/Anexos (se aplicável):
+- [Cole prints ou descreva o problema]
+
+Aguardo retorno,
+${name || "Usuário"}`
+  );
+  return `mailto:zragencyia@gmail.com?subject=${subject}&body=${body}`;
+}
+
 // ── Main ──
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
@@ -534,6 +677,21 @@ export default function ProfilePage() {
   const orgId = profile?.personal_org_id ?? undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Fetch org to get plan_tier
+  const { data: org } = useQuery({
+    queryKey: ["org-plan-tier", orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("plan_tier")
+        .eq("id", orgId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+  });
 
   const activeTab = (searchParams.get("tab") as TabKey) || "profile";
   const setTab = (tab: TabKey) => setSearchParams({ tab });
@@ -575,6 +733,13 @@ export default function ProfilePage() {
               </button>
             );
           })}
+          <div className="border-b sm:border-b sm:my-1" />
+          <a
+            href={buildSupportMailto(profile?.full_name ?? "", profile?.email ?? "")}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <Mail className="h-4 w-4" /> Suporte
+          </a>
         </nav>
 
         <div className="flex-1 min-w-0">
@@ -583,7 +748,7 @@ export default function ProfilePage() {
           )}
           {activeTab === "security" && <SecurityTab />}
           {activeTab === "notifications" && <NotificationsTab />}
-          {activeTab === "billing" && <BillingTab orgId={orgId} />}
+          {activeTab === "billing" && <BillingTab orgId={orgId} planName={org?.plan_tier} />}
         </div>
       </div>
     </AppShell>
