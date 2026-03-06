@@ -472,10 +472,6 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
         )}
       </div>
 
-      {/* Referral */}
-      <div className="max-w-2xl">
-        <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} orgId={orgId} />
-      </div>
 
       {/* Credit Packs — ABOVE plans */}
       <div className="rounded-xl border bg-card p-6 shadow-sm">

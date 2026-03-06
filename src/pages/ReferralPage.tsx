@@ -230,6 +230,29 @@ export default function ReferralPage() {
         </CardContent>
       </Card>
 
+      {/* Bônus de Indicações */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15">
+              <Gift className="h-4 w-4 text-primary" />
+            </div>
+            <CardTitle className="text-lg">Bônus de Indicações</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Indique um amigo e ambos ganham 5 créditos extras gratuitamente.
+          </p>
+          <p className="text-sm text-foreground font-medium">
+            Bônus disponível: <span className="text-primary font-bold">{bonusTotal}</span>
+          </p>
+          <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => referralLink ? copyLink(referralLink) : sharePlatform()}>
+            <Share2 className="h-3.5 w-3.5" /> Compartilhar convite
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Referral Link Card */}
       <Card>
         <CardHeader className="pb-3">
