@@ -32,14 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const TABS = [
-  { key: "profile", label: "Perfil", icon: User },
-  { key: "security", label: "Segurança", icon: Lock },
-  { key: "notifications", label: "Notificações", icon: Bell },
-  { key: "billing", label: "Plano & Cobrança", icon: CreditCard },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = AccountTabKey;
 
 // ── Profile Tab ──
 function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: any; onRefresh: () => void }) {
