@@ -114,6 +114,11 @@ function App() {
               element={<AuthGuard><BillingSuccess /></AuthGuard>}
             />
 
+            <Route
+              path="/indicacoes"
+              element={<AuthGuard><ReferralPage /></AuthGuard>}
+            />
+
             {/* Admin */}
 
             <Route

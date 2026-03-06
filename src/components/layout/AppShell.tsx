@@ -121,6 +121,9 @@ export function AppShell({
                 <DropdownMenuItem onClick={() => navigate("/profile?tab=billing")} className="gap-2 text-sm cursor-pointer">
                   <CreditCard className="h-4 w-4" /> Plano & Cobrança
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/indicacoes")} className="gap-2 text-sm cursor-pointer">
+                  <Gift className="h-4 w-4" /> Indicações
+                </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
 
