@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard, Coins, Loader2, Mail, ShieldAlert, Gift } from "lucide-react";
+import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard } from "lucide-react";
+import { AccountSidebar, type AccountTabKey } from "@/components/layout/AccountSidebar";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,14 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const TABS = [
-  { key: "profile", label: "Perfil", icon: User },
-  { key: "security", label: "Segurança", icon: Lock },
-  { key: "notifications", label: "Notificações", icon: Bell },
-  { key: "billing", label: "Plano & Cobrança", icon: CreditCard },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = AccountTabKey;
 
 // ── Profile Tab ──
 function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: any; onRefresh: () => void }) {
@@ -646,51 +640,25 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   );
 }
 
-// ── Support mailto helper ──
-function buildSupportMailto(name: string, email: string) {
-  const now = new Date().toLocaleString("pt-BR");
-  const subject = encodeURIComponent(`À equipe de suporte da Genius - ${name || "Usuário"}`);
-  const body = encodeURIComponent(
-`Olá equipe de suporte,
-
-Nome: ${name || "N/A"}
-Email: ${email || "N/A"}
-Data: ${now}
-
-Preciso de ajuda técnica com:
-
-[Escreva sua mensagem aqui...]
-
-Prints/Anexos (se aplicável):
-- [Cole prints ou descreva o problema]
-
-Aguardo retorno,
-${name || "Usuário"}`
-  );
-  return `mailto:zragencyia@gmail.com?subject=${subject}&body=${body}`;
-}
-
-// ── Main ──
+// ── Main Page ──
 export default function ProfilePage() {
-  const { user, signOut } = useAuth();
-  const { data: profile, refetch } = useProfile(user?.id);
-  const orgId = profile?.personal_org_id ?? undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { data: profile, refetch } = useProfile(user?.id);
+  const orgId = profile?.personal_org_id;
 
-  // Fetch org to get plan_tier
   const { data: org } = useQuery({
-    queryKey: ["org-plan-tier", orgId],
+    queryKey: ["org-for-profile", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("organizations")
         .select("plan_tier")
         .eq("id", orgId!)
         .single();
-      if (error) throw error;
       return data;
     },
-    enabled: !!orgId,
   });
 
   const activeTab = (searchParams.get("tab") as TabKey) || "profile";
@@ -708,46 +676,12 @@ export default function ProfilePage() {
       </section>
 
       <div className="flex flex-col gap-6 sm:flex-row">
-        <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0 overflow-x-auto pb-2 sm:pb-0 sm:overflow-x-visible">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
-          >
-            <LayoutDashboard className="h-4 w-4" /> Dashboard
-          </button>
-          <div className="hidden sm:block border-b sm:my-1" />
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setTab(tab.key)}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left whitespace-nowrap shrink-0",
-                  activeTab === tab.key
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4" /> {tab.label}
-              </button>
-            );
-          })}
-          <div className="hidden sm:block border-b sm:my-1" />
-          <button
-            onClick={() => navigate("/indicacoes")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
-          >
-            <Gift className="h-4 w-4" /> Indicações
-          </button>
-          <div className="hidden sm:block border-b sm:my-1" />
-          <a
-            href={buildSupportMailto(profile?.full_name ?? "", profile?.email ?? "")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
-          >
-            <Mail className="h-4 w-4" /> Suporte
-          </a>
-        </nav>
+        <AccountSidebar
+          activeTab={activeTab}
+          onTabChange={setTab}
+          userName={profile?.full_name}
+          userEmail={profile?.email}
+        />
 
         <div className="flex-1 min-w-0">
           {activeTab === "profile" && user && (
