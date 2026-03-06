@@ -10,6 +10,7 @@ import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ReferralBonusCard from "@/components/referral/ReferralBonusCard";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 // ── Helpers ──
 
