@@ -185,50 +185,67 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId } = body;
+    const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId } = body ?? {};
+
+    const isUuid = (value: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+    if (typeof sessionId !== "string" || !isUuid(sessionId)) {
+      return new Response(JSON.stringify({ error: "session_id_required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const allowedActions = new Set(["distribute", "refine", "saas-spec", "build"]);
+    if (typeof action !== "string" || !allowedActions.has(action)) {
+      return new Response(JSON.stringify({ error: "Unknown action" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     console.log(`Action: ${action}, sessionId: ${sessionId}, user: ${user.id}`);
 
-    // Server-side credit consumption before AI generation
-    if (sessionId) {
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    // Server-side credit consumption before AI generation (mandatory)
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-      // Get user's org_id from profile
-      const { data: profile } = await adminClient
-        .from("profiles")
-        .select("personal_org_id")
-        .eq("id", user.id)
-        .single();
+    // Get user's org_id from profile
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("personal_org_id")
+      .eq("id", user.id)
+      .single();
 
-      const orgId = profile?.personal_org_id;
-      if (!orgId) {
-        return new Response(JSON.stringify({ error: "no_org" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Consume credit server-side
-      const { data: creditResult, error: creditError } = await adminClient.rpc("consume_credit", {
-        p_org_id: orgId,
-        p_user_id: user.id,
-        p_session_id: sessionId,
+    const orgId = profile?.personal_org_id;
+    if (!orgId) {
+      return new Response(JSON.stringify({ error: "no_org" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
 
-      if (creditError) {
-        const errMsg = creditError.message || "";
-        if (errMsg.includes("no_credits")) {
-          return new Response(JSON.stringify({ error: "no_credits" }), {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        console.error("Credit consumption error:", creditError);
-        return new Response(JSON.stringify({ error: "credit_error" }), {
+    // Consume credit server-side
+    const { error: creditError } = await adminClient.rpc("consume_credit", {
+      p_org_id: orgId,
+      p_user_id: user.id,
+      p_session_id: sessionId,
+    });
+
+    if (creditError) {
+      const errMsg = creditError.message || "";
+      if (errMsg.includes("no_credits")) {
+        return new Response(JSON.stringify({ error: "no_credits" }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      console.error("Credit consumption error:", creditError);
+      return new Response(JSON.stringify({ error: "credit_error" }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     let result: Record<string, unknown>;
