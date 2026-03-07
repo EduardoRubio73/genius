@@ -157,6 +157,7 @@ export default function MistoMode() {
         session_id: sessionId, org_id: orgId, user_id: user.id,
         prompt_memory_id: promptRecord.id, spec_md: specMarkdown,
         rating: specRating || null, answers: { original_input: userInput, destino },
+        created_at: now,
       });
       if (specErr) throw specErr;
 

@@ -138,10 +138,11 @@ export function useUnifiedMemory({
 
   const allEntries = useMemo(() => {
     let combined = [...promptEntries, ...saasEntries].sort((a, b) => {
-      // Sort: favorites first, then by rating desc, then by date desc
+      // Sort: favorites first, then by created_at desc, then by title asc (A-Z)
       if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
-      if ((b.rating ?? 0) !== (a.rating ?? 0)) return (b.rating ?? 0) - (a.rating ?? 0);
-      return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
+      const dateCompare = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      return (a.title ?? "").localeCompare(b.title ?? "", "pt-BR");
     });
 
     // Filter by active mode tab
