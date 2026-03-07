@@ -13,7 +13,7 @@ export interface UnifiedMemoryEntry {
   is_favorite: boolean;
   tags: string[] | null;
   categoria: string | null;
-  created_at: string | null;
+  created_at: string;
   // Prompt-specific
   especialidade?: string | null;
   persona?: string | null;
@@ -62,7 +62,6 @@ export function useUnifiedMemory({
             "id, categoria, especialidade, rating, prompt_gerado, created_at, tags, persona, tarefa, objetivo, contexto, formato, restricoes, referencias, destino, session_id, is_favorite"
           )
           .eq("org_id", orgId)
-          .order("rating", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(40);
 
@@ -78,7 +77,6 @@ export function useUnifiedMemory({
             "id, project_name, spec_md, rating, created_at, is_favorite, answers, session_id, prompt_memory_id"
           )
           .eq("org_id", orgId)
-          .order("rating", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(40);
 
@@ -98,7 +96,7 @@ export function useUnifiedMemory({
           is_favorite: e.is_favorite ?? false,
           tags: e.tags,
           categoria: e.categoria,
-          created_at: e.created_at,
+          created_at: e.created_at ?? new Date().toISOString(),
           especialidade: e.especialidade,
           persona: e.persona,
           tarefa: e.tarefa,
@@ -122,7 +120,7 @@ export function useUnifiedMemory({
           is_favorite: e.is_favorite ?? false,
           tags: null,
           categoria: "SaaS Spec",
-          created_at: e.created_at,
+          created_at: e.created_at ?? new Date().toISOString(),
           project_name: e.project_name,
           answers: e.answers as Record<string, unknown> | null,
           session_id: e.session_id,
@@ -140,10 +138,11 @@ export function useUnifiedMemory({
 
   const allEntries = useMemo(() => {
     let combined = [...promptEntries, ...saasEntries].sort((a, b) => {
-      // Sort: favorites first, then by rating desc, then by date desc
+      // Sort: favorites first, then by created_at desc, then by title asc (A-Z)
       if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
-      if ((b.rating ?? 0) !== (a.rating ?? 0)) return (b.rating ?? 0) - (a.rating ?? 0);
-      return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime();
+      const dateCompare = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      return (a.title ?? "").localeCompare(b.title ?? "", "pt-BR");
     });
 
     // Filter by active mode tab
