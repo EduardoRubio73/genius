@@ -86,9 +86,21 @@ Deno.serve(async (req) => {
     }
 
     let stripeCustomerId = orgRow.stripe_customer_id;
+
+    // Validate existing customer or create a new one
+    if (stripeCustomerId) {
+      try {
+        await stripe.customers.retrieve(stripeCustomerId);
+      } catch (_e) {
+        // Customer doesn't exist in Stripe (e.g. test/live mode mismatch) — reset
+        stripeCustomerId = null;
+      }
+    }
+
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
         name: orgRow.name,
+        email: user.email,
         metadata: { org_id: orgRow.id, created_by_user_id: user.id },
       });
       stripeCustomerId = customer.id;
