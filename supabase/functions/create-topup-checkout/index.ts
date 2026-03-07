@@ -76,8 +76,36 @@ Deno.serve(async (req) => {
       return jsonResponse(400, { error: "Credit pack is not active." });
     }
 
-    if (!pack.stripe_price_id) {
-      return jsonResponse(400, { error: "Credit pack has no Stripe price configured." });
+    const unitAmount = Math.round(Number(pack.price_brl) * 100);
+    if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
+      return jsonResponse(400, { error: "Invalid credit pack price configuration." });
+    }
+
+    const fallbackLineItem = {
+      quantity: 1,
+      price_data: {
+        currency: "brl",
+        unit_amount: unitAmount,
+        product_data: {
+          name: `Créditos Extra: ${pack.display_name}`,
+          description: `Pacote de ${pack.credits} cotas extras`,
+          metadata: {
+            credit_pack_id: String(pack.id),
+            credits: String(pack.credits),
+          },
+        },
+      },
+    };
+
+    let lineItems: Array<Record<string, unknown>> = [fallbackLineItem];
+    if (pack.stripe_price_id) {
+      try {
+        await stripe.prices.retrieve(String(pack.stripe_price_id));
+        lineItems = [{ price: String(pack.stripe_price_id), quantity: 1 }];
+      } catch (_error) {
+        // Stored Stripe price may be stale (e.g. test/live mismatch); fallback to inline price_data.
+        lineItems = [fallbackLineItem];
+      }
     }
 
     const { data: orgRow } = await admin.from("organizations").select("id, name, stripe_customer_id").eq("id", orgId).single();
@@ -108,26 +136,6 @@ Deno.serve(async (req) => {
     }
 
     const { data: purchase, error: purchaseError } = await admin
-      .from("credit_purchases")
-      .insert({
-        org_id: orgId,
-        user_id: user.id,
-        pack_id: pack.id,
-        credits_granted: pack.credits,
-        amount_paid_brl: pack.price_brl,
-        status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (purchaseError || !purchase) {
-      return jsonResponse(500, { error: "Failed to create purchase record." });
-    }
-
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer: stripeCustomerId,
-      line_items: [{ price: pack.stripe_price_id, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
