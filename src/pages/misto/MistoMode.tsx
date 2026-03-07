@@ -141,6 +141,7 @@ export default function MistoMode() {
 
   const handleSave = useCallback(async () => {
     if (!orgId || !user || !fields) return;
+    const now = new Date().toISOString();
     try {
       const { data: promptRecord, error: promptErr } = await supabase
         .from("prompt_memory").insert({
@@ -148,6 +149,7 @@ export default function MistoMode() {
           especialidade: fields.especialidade, persona: fields.persona,
           tarefa: fields.tarefa, objetivo: fields.objetivo, contexto: fields.contexto,
           destino, prompt_gerado: promptGerado, rating: promptRating || null, categoria: "misto",
+          created_at: now,
         }).select().single();
       if (promptErr) throw promptErr;
 
