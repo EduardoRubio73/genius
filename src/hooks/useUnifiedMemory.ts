@@ -88,7 +88,7 @@ export function useUnifiedMemory({
         // ── Normalize prompt entries ───────────────────────────────────
         const normalized_prompts: UnifiedMemoryEntry[] = (pData ?? []).map((e) => ({
           id: e.id,
-          type: "prompt" as MemoryMode,
+          type: (e.categoria === "misto" ? "mixed" : "prompt") as MemoryMode,
           title: e.especialidade || e.categoria || "Prompt sem título",
           preview: e.prompt_gerado?.slice(0, 120) || "",
           fullContent: e.prompt_gerado || "",
