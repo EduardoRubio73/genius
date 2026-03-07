@@ -37,6 +37,10 @@ function MemoryCard({
   const timeAgo = entry.created_at
     ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: ptBR })
     : "";
+  const formattedDate = entry.created_at
+    ? new Date(entry.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+      + " " + new Date(entry.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : "";
 
   return (
     <button
