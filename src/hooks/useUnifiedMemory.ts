@@ -96,7 +96,7 @@ export function useUnifiedMemory({
           is_favorite: e.is_favorite ?? false,
           tags: e.tags,
           categoria: e.categoria,
-          created_at: e.created_at,
+          created_at: e.created_at ?? new Date().toISOString(),
           especialidade: e.especialidade,
           persona: e.persona,
           tarefa: e.tarefa,
