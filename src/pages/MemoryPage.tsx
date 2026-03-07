@@ -98,7 +98,7 @@ export default function MemoryPage() {
   const orgId = profile?.personal_org_id ?? undefined;
   
 
-  const [activeMode, setActiveMode] = useState<"all" | "prompt" | "saas" | "mixed" | "build" | "mixed">("all");
+  const [activeMode, setActiveMode] = useState<"all" | "prompt" | "saas" | "mixed" | "build">("all");
   const [filter, setFilter] = useState<"all" | "gold" | "favorites">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
