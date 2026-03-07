@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       return jsonResponse(400, { error: "Invalid credit pack price configuration." });
     }
 
-    const fallbackLineItem = {
+    const fallbackLineItem: Stripe.Checkout.SessionCreateParams.LineItem = {
       quantity: 1,
       price_data: {
         currency: "brl",
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       },
     };
 
-    let lineItems: Array<Record<string, unknown>> = [fallbackLineItem];
+    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [fallbackLineItem];
     if (pack.stripe_price_id) {
       try {
         await stripe.prices.retrieve(String(pack.stripe_price_id));
