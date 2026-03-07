@@ -58,7 +58,7 @@ function MemoryCard({
               {"★".repeat(entry.rating)}{"☆".repeat(5 - entry.rating)}
             </span>
           )}
-          <span className="ml-1">{timeAgo}</span>
+          <span className="ml-1" title={timeAgo}>{formattedDate}</span>
         </div>
       </div>
       <p className="text-sm font-semibold text-foreground line-clamp-1">{entry.title}</p>

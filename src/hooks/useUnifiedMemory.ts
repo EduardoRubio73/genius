@@ -196,9 +196,9 @@ export function useUnifiedMemory({
   const counts = useMemo(
     () => ({
       all: promptEntries.length + saasEntries.length,
-      prompt: promptEntries.length,
+      prompt: promptEntries.filter((e) => e.type === "prompt").length,
       saas: saasEntries.length,
-      mixed: 0,
+      mixed: promptEntries.filter((e) => e.type === "mixed").length,
       build: 0,
       favorites: [...promptEntries, ...saasEntries].filter((e) => e.is_favorite).length,
     }),

@@ -124,7 +124,9 @@ function EntryCard({
               ))}
             </div>
           )}
-          <span className="text-[9px] text-muted-foreground tabular-nums">{timeAgo(entry.created_at)}</span>
+          <span className="text-[9px] text-muted-foreground tabular-nums" title={timeAgo(entry.created_at)}>
+            {entry.created_at ? new Date(entry.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " " + new Date(entry.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}
+          </span>
         </div>
       </div>
 
