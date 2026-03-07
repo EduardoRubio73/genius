@@ -76,8 +76,36 @@ Deno.serve(async (req) => {
       return jsonResponse(400, { error: "Credit pack is not active." });
     }
 
-    if (!pack.stripe_price_id) {
-      return jsonResponse(400, { error: "Credit pack has no Stripe price configured." });
+    const unitAmount = Math.round(Number(pack.price_brl) * 100);
+    if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
+      return jsonResponse(400, { error: "Invalid credit pack price configuration." });
+    }
+
+    const fallbackLineItem: Stripe.Checkout.SessionCreateParams.LineItem = {
+      quantity: 1,
+      price_data: {
+        currency: "brl",
+        unit_amount: unitAmount,
+        product_data: {
+          name: `Créditos Extra: ${pack.display_name}`,
+          description: `Pacote de ${pack.credits} cotas extras`,
+          metadata: {
+            credit_pack_id: String(pack.id),
+            credits: String(pack.credits),
+          },
+        },
+      },
+    };
+
+    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [fallbackLineItem];
+    if (pack.stripe_price_id) {
+      try {
+        await stripe.prices.retrieve(String(pack.stripe_price_id));
+        lineItems = [{ price: String(pack.stripe_price_id), quantity: 1 }];
+      } catch (_error) {
+        // Stored Stripe price may be stale (e.g. test/live mismatch); fallback to inline price_data.
+        lineItems = [fallbackLineItem];
+      }
     }
 
     const { data: orgRow } = await admin.from("organizations").select("id, name, stripe_customer_id").eq("id", orgId).single();
@@ -127,7 +155,7 @@ Deno.serve(async (req) => {
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: stripeCustomerId,
-      line_items: [{ price: pack.stripe_price_id, quantity: 1 }],
+      line_items: lineItems,
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
