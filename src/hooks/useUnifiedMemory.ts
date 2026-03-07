@@ -120,7 +120,7 @@ export function useUnifiedMemory({
           is_favorite: e.is_favorite ?? false,
           tags: null,
           categoria: "SaaS Spec",
-          created_at: e.created_at,
+          created_at: e.created_at ?? new Date().toISOString(),
           project_name: e.project_name,
           answers: e.answers as Record<string, unknown> | null,
           session_id: e.session_id,
