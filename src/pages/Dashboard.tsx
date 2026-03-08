@@ -438,7 +438,7 @@ export default function Dashboard() {
                 <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 100}ms`, animationFillMode: "backwards" }}>
                   <ModeActionCard
                     {...mode}
-                    creditsRemaining={creditsRemaining + extraCredits}
+                    creditsRemaining={totalRemaining}
                     disabled={noQuota}
                   />
                 </div>
