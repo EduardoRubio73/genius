@@ -456,13 +456,13 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
               <span className="text-foreground font-semibold">{quota?.credits_used ?? 0}</span> / {quota?.credits_limit ?? 0} usadas
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground font-semibold">{quota?.credits_remaining ?? 0}</span> restantes
+              <span className="text-foreground font-semibold">{quota?.total_remaining ?? 0}</span> restantes
+              {((quota?.bonus_remaining ?? 0) > 0 || (quota?.extra_credits ?? 0) > 0) && (
+                <span className="text-muted-foreground text-[10px] ml-1">
+                  ({quota?.plan_remaining ?? 0} plano{(quota?.bonus_remaining ?? 0) > 0 ? ` + ${quota?.bonus_remaining} bônus` : ''}{(quota?.extra_credits ?? 0) > 0 ? ` + ${quota?.extra_credits} extras` : ''})
+                </span>
+              )}
             </p>
-            {(quota?.extra_credits ?? 0) > 0 && (
-              <p className="text-xs text-accent mt-1">
-                + <span className="font-semibold">{quota?.extra_credits}</span> créditos extras
-              </p>
-            )}
             {quota?.current_period_end && (
               <p className="text-xs text-muted-foreground mt-1">
                 Renova em {new Date(quota.current_period_end).toLocaleDateString("pt-BR")}
