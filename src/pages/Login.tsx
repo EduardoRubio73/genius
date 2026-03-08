@@ -99,7 +99,7 @@ async function checkInstanceConnected(config: { url: string; apiKey: string; ins
 }
 
 /* Envia mensagem via Evolution API */
-async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
+async function sendWhatsAppCode(phone: string, code: string, userName?: string): Promise<void> {
   const config = await getEvolutionConfig();
 
   // Pre-flight: verifica se instância está conectada
@@ -116,7 +116,7 @@ async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
       },
       body: JSON.stringify({
         number: normalized,
-        text: `🔐 *Seu código de verificação é: ${code}*\n\nEle expira em 10 minutos. Não compartilhe com ninguém.`,
+        text: `🔐 *Genius — Verificação de Segurança*\n\nOlá${userName ? `, ${userName}` : ""}! Seu código de verificação é:\n\n*${code}*\n\nEle expira em 10 minutos.\nNão compartilhe este código com ninguém.\n\n— Equipe Genius`,
       }),
     }
   );
@@ -194,7 +194,7 @@ export default function Login() {
   };
 
   // Gera + persiste + envia código
-  const createAndSendCode = async (userId: string, phone: string): Promise<void> => {
+  const createAndSendCode = async (userId: string, phone: string, userName?: string): Promise<void> => {
     const code = generateCode();
 
     const { error } = await supabase.rpc("insert_phone_verification", {
@@ -205,7 +205,7 @@ export default function Login() {
 
     if (error) throw new Error("Erro ao salvar código: " + error.message);
 
-    await sendWhatsAppCode(phone, code);
+    await sendWhatsAppCode(phone, code, userName);
   };
 
   // Verifica código digitado pelo usuário
@@ -355,7 +355,7 @@ export default function Login() {
             // Fetch celular from profile
             const { data: profile } = await supabase
               .from("profiles")
-              .select("celular")
+              .select("celular, full_name")
               .eq("id", authData.user.id)
               .single();
 
@@ -366,9 +366,10 @@ export default function Login() {
               return;
             }
 
+            const firstName = profile?.full_name?.split(" ")?.[0] ?? undefined;
             setCelular(userPhone);
             setPendingUserId(authData.user.id);
-            await createAndSendCode(authData.user.id, userPhone);
+            await createAndSendCode(authData.user.id, userPhone, firstName);
             setDigits(Array(6).fill(""));
             setResendCooldown(60);
             setVerifyModal(true);
