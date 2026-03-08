@@ -27,6 +27,7 @@ const navSections = [
   {
     label: "Sistema",
     items: [
+      { to: "/admin/settings/whatsapp", icon: MessageCircle, label: "Config. WhatsApp" },
       { to: "/admin/logs", icon: FileText, label: "Logs e Auditoria" },
     ],
   },

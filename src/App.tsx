@@ -25,6 +25,7 @@ import AdminStripeSettings from "./pages/admin/AdminStripeSettings";
 import AdminAIConfig from "./pages/admin/AdminAIConfig";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminFlags from "./pages/admin/AdminFlags";
+import WhatsAppSettings from "./pages/admin/WhatsAppSettings";
 
 import MistoMode from "./pages/misto/MistoMode";
 import PromptMode from "./pages/prompt/PromptMode";
