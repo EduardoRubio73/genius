@@ -79,9 +79,32 @@ function parseAuthRateLimitSeconds(message: string): number | null {
   return null;
 }
 
+/* Verifica se a instância Evolution está conectada */
+async function checkInstanceConnected(config: { url: string; apiKey: string; instance: string }): Promise<void> {
+  try {
+    const res = await fetch(
+      `${config.url}/instance/connectionState/${config.instance}`,
+      { method: "GET", headers: { apikey: config.apiKey } }
+    );
+    if (!res.ok) return; // não bloqueia se o endpoint não existir
+    const data = await res.json();
+    const state = data?.instance?.state ?? data?.state;
+    if (state && state !== "open") {
+      throw new Error("WhatsApp desconectado. O administrador precisa reconectar a instância.");
+    }
+  } catch (err: any) {
+    if (err?.message?.includes("desconectado")) throw err;
+    // ignora erros de rede no pre-flight — o sendText vai falhar com erro mais claro
+  }
+}
+
 /* Envia mensagem via Evolution API */
 async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
   const config = await getEvolutionConfig();
+
+  // Pre-flight: verifica se instância está conectada
+  await checkInstanceConnected(config);
+
   const normalized = normalizePhone(phone);
   const response = await fetch(
     `${config.url}/message/sendText/${config.instance}`,
@@ -99,8 +122,16 @@ async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
   );
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err?.message ?? "Falha ao enviar WhatsApp");
+    const body = await response.json().catch(() => ({}));
+    const detail = body?.response?.message?.[0] ?? body?.message ?? body?.error;
+
+    if (response.status === 401) {
+      throw new Error("Token da Evolution API inválido. Contate o administrador.");
+    }
+    if (detail?.includes?.("sendMessage")) {
+      throw new Error("Instância WhatsApp desconectada. Contate o suporte.");
+    }
+    throw new Error(detail ?? "Falha ao enviar WhatsApp. Tente novamente.");
   }
 }
 

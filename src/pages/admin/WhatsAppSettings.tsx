@@ -118,17 +118,38 @@ export default function WhatsAppSettings() {
         ? data.map((i: any) => i?.instance?.instanceName ?? i?.name ?? "")
         : [];
 
-      if (instances.some((n) => n === instance)) {
-        setTestResult("success");
-        toast({ title: "✅ Conexão OK!", description: `Instância "${instance}" encontrada e ativa.` });
-      } else {
+      if (!instances.some((n) => n === instance)) {
         setTestResult("error");
         toast({
           title: "⚠️ Instância não encontrada",
           description: `Instâncias disponíveis: ${instances.join(", ") || "nenhuma"}`,
           variant: "destructive",
         });
+        return;
       }
+
+      // Verificar estado de conexão da instância
+      const stateRes = await fetch(`${url}/instance/connectionState/${instance}`, {
+        method: "GET",
+        headers: { apikey: apiKey },
+      });
+
+      if (stateRes.ok) {
+        const stateData = await stateRes.json();
+        const state = stateData?.instance?.state ?? stateData?.state;
+        if (state && state !== "open") {
+          setTestResult("error");
+          toast({
+            title: "⚠️ Instância desconectada",
+            description: "Escaneie o QR Code no painel da Evolution API para reconectar.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      setTestResult("success");
+      toast({ title: "✅ Conexão OK!", description: `Instância "${instance}" conectada e ativa.` });
     } catch (err: any) {
       setTestResult("error");
       toast({ title: "Erro ao testar", description: err.message, variant: "destructive" });
