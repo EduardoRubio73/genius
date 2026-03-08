@@ -324,7 +324,29 @@ export default function Login() {
         navigate("/dashboard");
       }
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      const message = err?.message ?? "Erro inesperado ao autenticar.";
+
+      if (isSignUp && /email rate limit exceeded|for security purposes/i.test(message)) {
+        const retryAfter = parseAuthRateLimitSeconds(message);
+        setSignupCooldown(retryAfter);
+        toast({
+          title: "Limite de envio atingido",
+          description: `Aguarde ${retryAfter}s e tente novamente. Verifique também sua caixa de entrada (e spam).`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isSignUp && /already registered|already been registered/i.test(message)) {
+        toast({
+          title: "E-mail já cadastrado",
+          description: "Se esse e-mail já existe, confirme o e-mail recebido e use Entrar.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: "Erro", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
