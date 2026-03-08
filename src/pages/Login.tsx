@@ -268,10 +268,10 @@ export default function Login() {
 
         const userId = signUpData.user.id;
 
-        await supabase
-          .from("profiles")
-          .update({ full_name: fullName, celular: normalizePhone(celular) })
-          .eq("id", userId);
+        await supabase.rpc("update_profile_celular", {
+          p_user_id: userId,
+          p_celular: normalizePhone(celular),
+        });
 
         toast({ title: "Conta criada!", description: "Confirme seu e-mail e depois faça login." });
       } else {
