@@ -152,6 +152,7 @@ export default function Login() {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [verifyLoading, setVerifyLoading] = useState(false);
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const verificationPending = useRef(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [signupCooldown, setSignupCooldown] = useState(0);
