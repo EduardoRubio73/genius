@@ -2761,6 +2761,7 @@ export type Database = {
           org_id: string
         }[]
       }
+      check_phone_verified: { Args: { p_user_id: string }; Returns: boolean }
       consume_credit: {
         Args: { p_org_id: string; p_session_id: string; p_user_id: string }
         Returns: undefined
