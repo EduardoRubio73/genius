@@ -206,7 +206,8 @@ export default function Login() {
       }
 
       setVerifyModal(false);
-      toast({ title: "✔ WhatsApp verificado!", description: "Conta criada com sucesso. Confirme seu e-mail para acessar." });
+      toast({ title: "✔ WhatsApp verificado!" });
+      navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Erro na verificação", description: err.message, variant: "destructive" });
     } finally {
