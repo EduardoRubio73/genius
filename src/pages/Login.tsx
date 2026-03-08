@@ -284,6 +284,7 @@ export default function Login() {
             return;
           }
 
+          // Check referral code
           const refCode = new URLSearchParams(window.location.search).get("ref");
           if (refCode) {
             const { data: prof } = await supabase
@@ -311,6 +312,36 @@ export default function Login() {
               if (msg) toast({ title: msg.title, variant: msg.variant });
             }
             window.history.replaceState({}, "", "/login");
+          }
+
+          // Check WhatsApp phone verification
+          const { data: isVerified } = await supabase.rpc("check_phone_verified", {
+            p_user_id: authData.user.id,
+          });
+
+          if (!isVerified) {
+            // Fetch celular from profile
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("celular")
+              .eq("id", authData.user.id)
+              .single();
+
+            const userPhone = profile?.celular;
+            if (!userPhone) {
+              // No phone registered — skip verification, go to dashboard
+              navigate("/dashboard");
+              return;
+            }
+
+            setCelular(userPhone);
+            setPendingUserId(authData.user.id);
+            await createAndSendCode(authData.user.id, userPhone);
+            setDigits(Array(6).fill(""));
+            setResendCooldown(60);
+            setVerifyModal(true);
+            toast({ title: "Verificação necessária", description: "Insira o código enviado ao seu WhatsApp." });
+            return;
           }
         }
 
