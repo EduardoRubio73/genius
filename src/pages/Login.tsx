@@ -140,6 +140,13 @@ export default function Login() {
     return () => clearTimeout(t);
   }, [resendCooldown]);
 
+  // Countdown para novo tentativa de signup quando Auth aplica rate limit
+  useEffect(() => {
+    if (signupCooldown <= 0) return;
+    const t = setTimeout(() => setSignupCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [signupCooldown]);
+
   const checkAccountActive = async (userId: string): Promise<boolean> => {
     const { data } = await supabase
       .from("profiles")
