@@ -170,47 +170,26 @@ export default function Login() {
     setVerifyLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from("phone_verifications")
-        .select("id, code, expires_at, attempts")
-        .eq("user_id", pendingUserId)
-        .is("verified_at", null)
-        .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+      const { data: result, error } = await supabase.rpc("verify_phone_code", {
+        p_user_id: pendingUserId,
+        p_code: verifyCode.trim(),
+      });
 
-      if (error || !data) {
+      if (error) throw new Error(error.message);
+
+      if (result === "expired") {
         toast({ title: "Código expirado ou inválido.", description: "Solicite um novo código.", variant: "destructive" });
         return;
       }
-
-      if (data.attempts >= 5) {
+      if (result === "too_many_attempts") {
         toast({ title: "Muitas tentativas.", description: "Solicite um novo código.", variant: "destructive" });
         return;
       }
-
-      if (data.code !== verifyCode.trim()) {
-        await supabase
-          .from("phone_verifications")
-          .update({ attempts: (data.attempts ?? 0) + 1 })
-          .eq("id", data.id);
-
-        toast({ title: "Código incorreto.", description: `Tentativa ${(data.attempts ?? 0) + 1}/5`, variant: "destructive" });
+      if (result?.startsWith("wrong_code:")) {
+        const attempt = result.split(":")[1];
+        toast({ title: "Código incorreto.", description: `Tentativa ${attempt}/5`, variant: "destructive" });
         return;
       }
-
-      // Marca como verificado
-      await supabase
-        .from("phone_verifications")
-        .update({ verified_at: new Date().toISOString() })
-        .eq("id", data.id);
-
-      // Atualiza celular no profile
-      await supabase
-        .from("profiles")
-        .update({ celular: normalizePhone(celular) })
-        .eq("id", pendingUserId);
 
       setVerifyModal(false);
       toast({ title: "✔ WhatsApp verificado!", description: "Conta criada com sucesso. Confirme seu e-mail para acessar." });
