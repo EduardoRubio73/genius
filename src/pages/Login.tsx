@@ -194,7 +194,7 @@ export default function Login() {
   };
 
   // Gera + persiste + envia código
-  const createAndSendCode = async (userId: string, phone: string): Promise<void> => {
+  const createAndSendCode = async (userId: string, phone: string, userName?: string): Promise<void> => {
     const code = generateCode();
 
     const { error } = await supabase.rpc("insert_phone_verification", {
@@ -205,7 +205,7 @@ export default function Login() {
 
     if (error) throw new Error("Erro ao salvar código: " + error.message);
 
-    await sendWhatsAppCode(phone, code);
+    await sendWhatsAppCode(phone, code, userName);
   };
 
   // Verifica código digitado pelo usuário
