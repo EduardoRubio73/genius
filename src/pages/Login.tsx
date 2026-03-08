@@ -561,7 +561,14 @@ export default function Login() {
       </Dialog>
 
       {/* WhatsApp Verification Modal */}
-      <Dialog open={verifyModal} onOpenChange={() => {}}>
+      <Dialog open={verifyModal} onOpenChange={async (open) => {
+        if (!open) {
+          verificationPending.current = false;
+          setVerifyModal(false);
+          await supabase.auth.signOut();
+          toast({ title: "Verificação cancelada", description: "Você foi desconectado.", variant: "destructive" });
+        }
+      }}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
