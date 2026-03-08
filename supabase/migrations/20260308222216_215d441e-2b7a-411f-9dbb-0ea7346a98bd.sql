@@ -1,0 +1,2 @@
+SELECT process_credit_purchase('c3d79eda-b911-4a3b-a2ca-461f5e9b1118'::uuid, 'manual_fix_' || gen_random_uuid()::text);
+SELECT process_credit_purchase('89721701-96a2-4a27-90a5-d47ec72969bd'::uuid, 'manual_fix_' || gen_random_uuid()::text);
