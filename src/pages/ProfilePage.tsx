@@ -135,7 +135,8 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <Label htmlFor="celular">📱 Celular</Label>
-            <InfoTooltip content="Número de telefone para contato. Somente números." />
+            <InfoTooltip content="Número verificado via WhatsApp. Se alterar o número, será necessário verificar novamente no próximo login." />
+            {celular && <PhoneVerifiedBadge userId={userId} currentPhone={celular} />}
           </div>
           <Input
             id="celular"
