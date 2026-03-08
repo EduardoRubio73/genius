@@ -231,6 +231,16 @@ export default function Login() {
   // Submit principal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSignUp && signupCooldown > 0) {
+      toast({
+        title: "Aguarde para tentar novamente",
+        description: `Você poderá tentar novo cadastro em ${signupCooldown}s.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
