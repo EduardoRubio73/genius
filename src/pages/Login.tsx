@@ -206,7 +206,8 @@ export default function Login() {
       }
 
       setVerifyModal(false);
-      toast({ title: "✔ WhatsApp verificado!", description: "Conta criada com sucesso. Confirme seu e-mail para acessar." });
+      toast({ title: "✔ WhatsApp verificado!" });
+      navigate("/dashboard");
     } catch (err: any) {
       toast({ title: "Erro na verificação", description: err.message, variant: "destructive" });
     } finally {
@@ -272,14 +273,7 @@ export default function Login() {
           .update({ full_name: fullName, celular: normalizePhone(celular) })
           .eq("id", userId);
 
-        await createAndSendCode(userId, celular);
-
-        setPendingUserId(userId);
-        setDigits(Array(6).fill(""));
-        setResendCooldown(60);
-        setVerifyModal(true);
-
-        toast({ title: "Conta criada!", description: "Verifique seu WhatsApp e confirme o código." });
+        toast({ title: "Conta criada!", description: "Confirme seu e-mail e depois faça login." });
       } else {
         const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -291,6 +285,7 @@ export default function Login() {
             return;
           }
 
+          // Check referral code
           const refCode = new URLSearchParams(window.location.search).get("ref");
           if (refCode) {
             const { data: prof } = await supabase
@@ -318,6 +313,36 @@ export default function Login() {
               if (msg) toast({ title: msg.title, variant: msg.variant });
             }
             window.history.replaceState({}, "", "/login");
+          }
+
+          // Check WhatsApp phone verification
+          const { data: isVerified } = await supabase.rpc("check_phone_verified", {
+            p_user_id: authData.user.id,
+          });
+
+          if (!isVerified) {
+            // Fetch celular from profile
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("celular")
+              .eq("id", authData.user.id)
+              .single();
+
+            const userPhone = profile?.celular;
+            if (!userPhone) {
+              // No phone registered — skip verification, go to dashboard
+              navigate("/dashboard");
+              return;
+            }
+
+            setCelular(userPhone);
+            setPendingUserId(authData.user.id);
+            await createAndSendCode(authData.user.id, userPhone);
+            setDigits(Array(6).fill(""));
+            setResendCooldown(60);
+            setVerifyModal(true);
+            toast({ title: "Verificação necessária", description: "Insira o código enviado ao seu WhatsApp." });
+            return;
           }
         }
 
