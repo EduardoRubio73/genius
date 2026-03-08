@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { MessageCircle, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Copy, Link } from "lucide-react";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface Setting {
@@ -34,6 +34,8 @@ const META: Record<string, { label: string; placeholder: string; description: st
   },
 };
 
+const WEBHOOK_URL = "https://pcaebfncvuvdguyjmyxm.supabase.co/functions/v1/evolution-webhook";
+
 // ─── Componente ───────────────────────────────────────────────────────────────
 export default function WhatsAppSettings() {
   const { toast } = useToast();
@@ -44,6 +46,7 @@ export default function WhatsAppSettings() {
   const [saving, setSaving]         = useState(false);
   const [testing, setTesting]       = useState(false);
   const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
 
   // ─── Carrega configs do banco ────────────────────────────────────────────
   useEffect(() => {
@@ -60,6 +63,9 @@ export default function WhatsAppSettings() {
         const map: Record<string, string> = {};
         data.forEach((row) => { map[row.key] = row.value; });
         setValues((prev) => ({ ...prev, ...map }));
+        if (map["evolution_connection_status"]) {
+          setConnectionStatus(map["evolution_connection_status"]);
+        }
       }
       setLoading(false);
     };
@@ -106,49 +112,32 @@ export default function WhatsAppSettings() {
 
       if (!url || !apiKey || !instance) throw new Error("Preencha todos os campos antes de testar.");
 
-      const response = await fetch(`${url}/instance/fetchInstances`, {
-        method:  "GET",
-        headers: { apikey: apiKey },
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status} — verifique a URL e o token.`);
-
-      const data = await response.json();
-      const instances: string[] = Array.isArray(data)
-        ? data.map((i: any) => i?.instance?.instanceName ?? i?.name ?? "")
-        : [];
-
-      if (!instances.some((n) => n === instance)) {
-        setTestResult("error");
-        toast({
-          title: "⚠️ Instância não encontrada",
-          description: `Instâncias disponíveis: ${instances.join(", ") || "nenhuma"}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Verificar estado de conexão da instância
       const stateRes = await fetch(`${url}/instance/connectionState/${instance}`, {
         method: "GET",
         headers: { apikey: apiKey },
       });
 
-      if (stateRes.ok) {
-        const stateData = await stateRes.json();
-        const state = stateData?.instance?.state ?? stateData?.state;
-        if (state && state !== "open") {
-          setTestResult("error");
-          toast({
-            title: "⚠️ Instância desconectada",
-            description: "Escaneie o QR Code no painel da Evolution API para reconectar.",
-            variant: "destructive",
-          });
-          return;
-        }
+      if (!stateRes.ok) {
+        throw new Error(`HTTP ${stateRes.status} — verifique a URL, token e nome da instância.`);
+      }
+
+      const stateData = await stateRes.json();
+      const state = stateData?.instance?.state ?? stateData?.state;
+
+      if (state && state !== "open") {
+        setTestResult("error");
+        setConnectionStatus(state);
+        toast({
+          title: "⚠️ Instância desconectada",
+          description: `Estado: "${state}". Escaneie o QR Code no painel da Evolution API para reconectar.`,
+          variant: "destructive",
+        });
+        return;
       }
 
       setTestResult("success");
+      setConnectionStatus("open");
       toast({ title: "✅ Conexão OK!", description: `Instância "${instance}" conectada e ativa.` });
     } catch (err: any) {
       setTestResult("error");
@@ -156,6 +145,11 @@ export default function WhatsAppSettings() {
     } finally {
       setTesting(false);
     }
+  };
+
+  const handleCopyWebhook = () => {
+    navigator.clipboard.writeText(WEBHOOK_URL);
+    toast({ title: "URL copiada!", description: "Cole no painel da Evolution API." });
   };
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
@@ -186,6 +180,24 @@ export default function WhatsAppSettings() {
             <p style={{ fontSize: 12, color: "var(--adm-text-soft)", margin: 0 }}>Evolution API — credenciais de integração</p>
           </div>
         </div>
+
+        {/* Connection status badge */}
+        {connectionStatus && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            marginTop: 10, padding: "4px 12px", borderRadius: 20,
+            fontSize: 12, fontWeight: 600,
+            background: connectionStatus === "open" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+            color: connectionStatus === "open" ? "#22c55e" : "#ef4444",
+            border: `1px solid ${connectionStatus === "open" ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
+          }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: connectionStatus === "open" ? "#22c55e" : "#ef4444",
+            }} />
+            {connectionStatus === "open" ? "Instância conectada" : `Instância: ${connectionStatus}`}
+          </div>
+        )}
       </div>
 
       {/* Card de campos */}
@@ -283,6 +295,41 @@ export default function WhatsAppSettings() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Webhook URL Card */}
+      <div style={{
+        marginTop: 16,
+        padding: "16px 20px",
+        borderRadius: 14,
+        border: "1px solid var(--adm-border)",
+        background: "var(--adm-surface)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <Link size={14} style={{ color: "var(--adm-accent)" }} />
+          <strong style={{ fontSize: 13 }}>Webhook URL</strong>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          background: "var(--adm-bg)", borderRadius: 8,
+          padding: "8px 12px",
+        }}>
+          <code style={{ fontSize: 11, flex: 1, wordBreak: "break-all", color: "var(--adm-text-soft)" }}>
+            {WEBHOOK_URL}
+          </code>
+          <button
+            type="button"
+            onClick={handleCopyWebhook}
+            className="adm-btn outline"
+            style={{ padding: "4px 8px", fontSize: 11, display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}
+          >
+            <Copy size={12} /> Copiar
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: "var(--adm-text-soft)", marginTop: 8, marginBottom: 0, lineHeight: 1.5 }}>
+          Configure esta URL no painel da Evolution API como webhook da instância.
+          Eventos recomendados: <strong>CONNECTION_UPDATE</strong>, <strong>MESSAGES_UPDATE</strong>, <strong>MESSAGES_UPSERT</strong>.
+        </p>
       </div>
 
       {/* Info extra */}
