@@ -272,14 +272,7 @@ export default function Login() {
           .update({ full_name: fullName, celular: normalizePhone(celular) })
           .eq("id", userId);
 
-        await createAndSendCode(userId, celular);
-
-        setPendingUserId(userId);
-        setDigits(Array(6).fill(""));
-        setResendCooldown(60);
-        setVerifyModal(true);
-
-        toast({ title: "Conta criada!", description: "Verifique seu WhatsApp e confirme o código." });
+        toast({ title: "Conta criada!", description: "Confirme seu e-mail e depois faça login." });
       } else {
         const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
