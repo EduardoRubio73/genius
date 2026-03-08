@@ -369,6 +369,7 @@ export default function Login() {
             }
 
             const firstName = profile?.full_name?.split(" ")?.[0] ?? undefined;
+            verificationPending.current = true;
             setCelular(userPhone);
             setPendingUserId(authData.user.id);
             await createAndSendCode(authData.user.id, userPhone, firstName);
