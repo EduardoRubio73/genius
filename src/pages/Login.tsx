@@ -18,6 +18,48 @@ import {
 import logo from "@/assets/logo.png";
 
 // ────────────────────────────────────────────────────────────────────────────────
+// Helper functions
+// ────────────────────────────────────────────────────────────────────────────────
+
+function buildReactivationMailto(name: string, email: string, userId: string) {
+  const now = new Date().toLocaleString("pt-BR");
+  const subject = encodeURIComponent(`Solicitação de Reativação - ${name || "Usuário"}`);
+  const body = encodeURIComponent(
+`Olá equipe de suporte,
+
+O usuário ${name || "N/A"} (${email}) solicitou REATIVAÇÃO da conta.
+
+Dados:
+• ID: ${userId}
+• Data da solicitação: ${now}
+
+Aguardando aprovação manual.
+
+---
+Sistema Genius`
+  );
+  return `mailto:zragencyia@gmail.com?subject=${subject}&body=${body}`;
+}
+
+/* Gera código numérico aleatório de 6 dígitos */
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+/* Normaliza celular para formato internacional (sem + nem espaços) */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("55") && digits.length >= 12) return digits;
+  return "55" + digits;
+}
+
+function parseAuthRateLimitSeconds(message: string): number | null {
+  const match = message.match(/after\s+(\d+)\s+seconds/i);
+  if (match?.[1]) return Number(match[1]);
+  return null;
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
 // WhatsApp OTP — sends via server-side Edge Function (no secrets exposed)
 // ────────────────────────────────────────────────────────────────────────────────
 async function sendWhatsAppCode(phone: string, code: string, userName?: string): Promise<void> {
