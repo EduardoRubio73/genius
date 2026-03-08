@@ -2871,6 +2871,10 @@ export type Database = {
         Args: { p_name: string; p_product_id: string }
         Returns: undefined
       }
+      update_profile_celular: {
+        Args: { p_celular: string; p_user_id: string }
+        Returns: undefined
+      }
       update_subscription_status_automatically: {
         Args: never
         Returns: undefined

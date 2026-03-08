@@ -1,37 +1,45 @@
 
 
-## Analysis: "Limite de envio atingido" on Signup
+## Fix: Admin Credits Not Saving
 
-### Root Cause
+### Root Causes
 
-The auth logs show:
-- User `rsradiotaxi.sor@gmail.com` attempted signup → got **429 `over_email_send_rate_limit`**
-- The user ID `b1701425-...` no longer exists in `auth.users` — Supabase created a transient user but the confirmation email was rate-limited
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-**This is a Supabase platform rate limit**, not a code bug. Supabase's hosted Auth has a default limit of **2 confirmation emails per hour** (configurable in Supabase Dashboard → Auth → Rate Limits). Previous test attempts from the same email/IP exhausted this quota, so even "first" attempts now fail.
+### Solution
 
-### Why it shows on "first" attempt
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-1. During development/testing, multiple signUp calls were made for the same or different emails
-2. Supabase counts ALL confirmation emails globally (per project, per hour)
-3. The rate limit persists even if the user was never fully created
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-### Fix (two parts)
+### Files to Edit
 
-#### 1. Increase Supabase Auth Rate Limits (Dashboard config)
-Go to **Supabase Dashboard → Auth → Rate Limits** and increase:
-- `RATE_LIMIT_EMAIL_SENT` — default is very low (2-4/hour). Set to 10+ for production.
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-#### 2. Improve signup resilience in code
-The `profiles.update()` call after signup (line 271-274) also silently fails because there's no active session when email confirmation is required. The profile trigger should handle `full_name` from `raw_user_meta_data`, but `celular` is lost.
+### Details
 
-**Fix**: Save `celular` via a security definer RPC (like we did for phone verification), since the user has no session yet.
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-### Changes
-
-| Target | Action |
-|--------|--------|
-| Supabase Dashboard | Increase Auth email rate limits |
-| DB migration | Create `update_profile_celular(p_user_id, p_celular)` security definer function |
-| `src/pages/Login.tsx` | Use RPC to save celular during signup instead of direct `profiles.update()` |
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
