@@ -162,7 +162,7 @@ export default function Login() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) navigate("/dashboard", { replace: true });
+    if (user && !verificationPending.current) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
 
   // Countdown do botão "Reenviar"
