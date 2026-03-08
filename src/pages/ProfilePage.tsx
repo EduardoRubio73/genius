@@ -34,6 +34,29 @@ import { toast } from "sonner";
 
 type TabKey = AccountTabKey;
 
+function PhoneVerifiedBadge({ userId, currentPhone }: { userId: string; currentPhone: string }) {
+  const { data: isVerified, isLoading } = useQuery({
+    queryKey: ["phone-verified", userId, currentPhone],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("check_phone_verified", { p_user_id: userId });
+      return !!data;
+    },
+    enabled: !!userId && !!currentPhone,
+  });
+
+  if (isLoading) return null;
+
+  return isVerified ? (
+    <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10">
+      <ShieldCheck className="h-3 w-3" /> Verificado
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+      Não verificado
+    </Badge>
+  );
+}
+
 // ── Profile Tab ──
 function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: any; onRefresh: () => void }) {
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
