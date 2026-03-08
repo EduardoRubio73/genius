@@ -1517,6 +1517,39 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_verifications: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          phone: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          phone: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          phone?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       platform_configs: {
         Row: {
           created_at: string
@@ -1557,7 +1590,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           avatar_url: string | null
-          celular: number | null
+          celular: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -1570,7 +1603,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           avatar_url?: string | null
-          celular?: number | null
+          celular?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -1583,7 +1616,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           avatar_url?: string | null
-          celular?: number | null
+          celular?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
