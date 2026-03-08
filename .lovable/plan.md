@@ -1,45 +1,50 @@
 
 
-## Fix: Admin Credits Not Saving
+## Show usage summary when "Resumo da Conta" is collapsed
 
-### Root Causes
+When the collapsible is closed, the header area is empty -- just the title and chevron. We'll add a compact inline summary right in the trigger row that only appears when collapsed.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Design
 
-### Solution
+The trigger row will show, when `!resumoOpen`:
+- A small usage bar (thin progress bar)
+- Text: `{creditsUsed}/{creditsLimit} cotas` + renewal date
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+This gives instant visibility without opening the card.
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### Implementation
 
-### Files to Edit
+**File: `src/pages/Dashboard.tsx`**
+
+Inside the `CollapsibleTrigger` (line 335-340), add a conditional block that renders when `!resumoOpen && !isQuotaLoading`:
+
+```tsx
+<CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer">
+  <p className="text-sm font-semibold text-blue-700 ...">
+    Resumo da Conta
+  </p>
+  
+  {/* NEW: Inline summary when collapsed */}
+  {!resumoOpen && !isQuotaLoading && (
+    <div className="flex items-center gap-3 mr-2">
+      {/* Mini progress bar */}
+      <div className="h-1.5 w-20 rounded-full bg-blue-200/50 overflow-hidden">
+        <div className={cn("h-full rounded-full", percentUsed >= 80 ? "bg-destructive" : "bg-blue-500")}
+             style={{ width: `${Math.min(100, percentUsed)}%` }} />
+      </div>
+      <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap">
+        {creditsUsed}/{creditsLimit} · Renova {renewalDate}
+      </span>
+    </div>
+  )}
+  
+  <ChevronDown ... />
+</CollapsibleTrigger>
+```
+
+Need to compute `percentUsed` from quota (already available as `quota?.percent_used ?? 0`).
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+| `src/pages/Dashboard.tsx` | Add inline collapsed summary with mini progress bar + quota text in the trigger row |
 
