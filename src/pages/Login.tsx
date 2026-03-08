@@ -73,6 +73,12 @@ function normalizePhone(phone: string): string {
   return "55" + digits;
 }
 
+function parseAuthRateLimitSeconds(message: string): number {
+  const match = message.match(/after\s+(\d+)\s+seconds/i);
+  if (match?.[1]) return Number(match[1]);
+  return 60;
+}
+
 /* Envia mensagem via Evolution API */
 async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
   const config = await getEvolutionConfig();
@@ -117,6 +123,7 @@ export default function Login() {
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [signupCooldown, setSignupCooldown] = useState(0);
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -132,6 +139,13 @@ export default function Login() {
     const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [resendCooldown]);
+
+  // Countdown para novo tentativa de signup quando Auth aplica rate limit
+  useEffect(() => {
+    if (signupCooldown <= 0) return;
+    const t = setTimeout(() => setSignupCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [signupCooldown]);
 
   const checkAccountActive = async (userId: string): Promise<boolean> => {
     const { data } = await supabase
@@ -217,6 +231,16 @@ export default function Login() {
   // Submit principal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSignUp && signupCooldown > 0) {
+      toast({
+        title: "Aguarde para tentar novamente",
+        description: `Você poderá tentar novo cadastro em ${signupCooldown}s.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -300,7 +324,29 @@ export default function Login() {
         navigate("/dashboard");
       }
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      const message = err?.message ?? "Erro inesperado ao autenticar.";
+
+      if (isSignUp && /email rate limit exceeded|for security purposes/i.test(message)) {
+        const retryAfter = parseAuthRateLimitSeconds(message);
+        setSignupCooldown(retryAfter);
+        toast({
+          title: "Limite de envio atingido",
+          description: `Aguarde ${retryAfter}s e tente novamente. Verifique também sua caixa de entrada (e spam).`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (isSignUp && /already registered|already been registered/i.test(message)) {
+        toast({
+          title: "E-mail já cadastrado",
+          description: "Se esse e-mail já existe, confirme o e-mail recebido e use Entrar.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({ title: "Erro", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -398,8 +444,18 @@ export default function Login() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Carregando..." : isSignUp ? "Criar conta" : "Entrar"}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || (isSignUp && signupCooldown > 0)}
+          >
+            {loading
+              ? "Carregando..."
+              : isSignUp && signupCooldown > 0
+                ? `Aguarde ${signupCooldown}s`
+                : isSignUp
+                  ? "Criar conta"
+                  : "Entrar"}
           </Button>
         </form>
 
