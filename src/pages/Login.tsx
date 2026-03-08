@@ -152,11 +152,10 @@ export default function Login() {
   const createAndSendCode = async (userId: string, phone: string): Promise<void> => {
     const code = generateCode();
 
-    const { error } = await supabase.from("phone_verifications").insert({
-      user_id: userId,
-      phone: normalizePhone(phone),
-      code,
-      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+    const { error } = await supabase.rpc("insert_phone_verification", {
+      p_user_id: userId,
+      p_phone: normalizePhone(phone),
+      p_code: code,
     });
 
     if (error) throw new Error("Erro ao salvar código: " + error.message);
