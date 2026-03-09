@@ -273,7 +273,8 @@ export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
-  const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
+  const { data: quota, isLoading: quotaLoading, isFetching: quotaFetching } = useQuotaBalance(orgId);
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [resumoOpen, setResumoOpen] = useState(false);
   const [modosOpen, setModosOpen] = useState(true);
@@ -291,6 +292,14 @@ export default function Dashboard() {
   const totalRemaining = creditsRemaining + bonusRemaining + extraCredits;
   const noQuota = !isQuotaLoading && quota != null && totalRemaining <= 0;
   const percentUsed = quota?.percent_used ?? 0;
+
+  const planUsed = quota?.plan_used ?? 0;
+  const planTotal = quota?.plan_total ?? 0;
+  const bonusTotal = bonusRemaining + extraCredits;
+
+  const handleRefreshQuota = () => {
+    queryClient.invalidateQueries({ queryKey: ["quota-balance", orgId] });
+  };
 
   const renewalDate = quota?.current_period_end
     ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
