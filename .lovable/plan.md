@@ -1,49 +1,45 @@
 
-# Plano: Correções Admin + Confirmação Suporte
 
-## Problemas Identificados
+## Fix: Admin Credits Not Saving
 
-### 1. Usuário RS não aparece na lista Admin
-A view `admin_users_overview` tem `WHERE is_super_admin()` - se o usuário admin atual não está sendo reconhecido como super admin pela função, a view retorna vazio.
+### Root Causes
 
-**Verificação**: A view está correta, mas a função `is_super_admin()` pode não estar retornando `true` para o usuário logado no preview.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-### 2. Bônus por Indicação
-O usuário RS **JÁ TEM 10 créditos de bônus** (`bonus_credits_total: 10`). Esses vieram das 2 compras de créditos extras que foram processadas manualmente.
+### Solution
 
-**ATENÇÃO**: O sistema **não tem** lógica para dar bônus de indicação quando alguém compra créditos extras. O sistema de indicação atual só dá bônus quando:
-- O indicado assina um plano pago (`reward_referral_if_paid`)
-- Não quando compra créditos extras (top-up)
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-**Se você quer bônus ao indicado comprar créditos extras**, isso precisa ser implementado.
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-### 3. Confirmação no botão Suporte
-Atualmente é um `<a href="mailto:...">` direto. Precisa virar um botão com dialog de confirmação.
+### Files to Edit
 
----
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-## Implementação
+### Details
 
-### Parte 1: Corrigir visibilidade Admin Users
-Verificar se `is_super_admin()` funciona e testar com o usuário certo.
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-### Parte 2: Confirmação Suporte
-No `AccountSidebar.tsx`:
-1. Converter o link em botão
-2. Adicionar state para dialog
-3. Mostrar AlertDialog perguntando "Deseja enviar um email ao suporte?"
-4. Ao confirmar, abrir o mailto
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
-### Parte 3 (Opcional): Bônus por compra de créditos extras
-Se desejado, adicionar trigger que dá bônus ao referrer quando o indicado compra créditos extras.
-
----
-
-## Arquivos a Modificar
-
-1. `src/components/layout/AccountSidebar.tsx` - Adicionar dialog de confirmação no Suporte
-
----
-
-## Decisão Necessária
-Você quer implementar bônus de indicação também para compra de créditos extras (além de assinatura de plano)?
