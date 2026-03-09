@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck } from "lucide-react";
+import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck, Crown, Zap, Gift, Calendar, ChevronDown, RefreshCw } from "lucide-react";
 import { AccountSidebar, type AccountTabKey } from "@/components/layout/AccountSidebar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -29,8 +29,79 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+// ── Helper Components ──
+
+function getPlanBadgeClasses(planName: string | undefined): string {
+  const name = (planName ?? "").toLowerCase();
+  if (name.includes("enterprise")) return "border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+  if (name.includes("pro")) return "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400";
+  if (name.includes("starter") || name.includes("básico") || name.includes("basico")) return "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400";
+  return "border-muted-foreground/30 bg-muted text-muted-foreground";
+}
+
+function BillingSummaryCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  iconClass,
+  loading,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | number;
+  sub?: string;
+  iconClass?: string;
+  loading?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-5 flex items-center gap-3 shadow-md hover:shadow-xl transition-all duration-300">
+      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", iconClass ?? "bg-muted text-muted-foreground")}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+        {loading ? (
+          <Skeleton className="h-6 w-16 mt-0.5" />
+        ) : (
+          <>
+            <p className="text-lg font-bold text-foreground tracking-tight leading-tight">{value}</p>
+            {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UsageProgressBar({ used, limit, className }: { used: number; limit: number; className?: string }) {
+  const pct = limit > 0 ? Math.min(100, Math.max(0, (used / limit) * 100)) : 0;
+
+  const barColor =
+    pct >= 90 ? "from-red-500 to-red-600" :
+    pct >= 75 ? "from-orange-400 to-orange-500" :
+    pct >= 50 ? "from-yellow-400 to-yellow-500" :
+    "from-green-400 to-green-600";
+
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <div className="relative h-3 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-700", barColor)}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+        <span><span className="text-foreground font-semibold">{used}</span> / {limit} usadas</span>
+        <span><span className="text-foreground font-semibold">{Math.max(0, limit - used)}</span> restantes</span>
+      </div>
+    </div>
+  );
+}
 
 type TabKey = AccountTabKey;
 
@@ -379,10 +450,12 @@ function useCreditPacks() {
 const TIER_ORDER: Record<string, number> = { free: 0, starter: 1, pro: 2, enterprise: 3 };
 
 function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: string | undefined }) {
-  const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
+  const queryClient = useQueryClient();
+  const { data: quota, isLoading: quotaLoading, isFetching: quotaFetching } = useQuotaBalance(orgId);
   const { data: products, isLoading: productsLoading } = useBillingProducts();
   const { data: packs, isLoading: packsLoading } = useCreditPacks();
   const [buyingPackId, setBuyingPackId] = useState<string | null>(null);
+  const [resumoOpen, setResumoOpen] = useState(true);
 
   // Filter out topup products
   const subscriptionPlans = (products ?? []).filter(
@@ -424,11 +497,27 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
     }
   };
 
-  // Quota bars
-  const planPct = Number(quota?.percent_used ?? 0);
+  const handleRefreshQuota = () => {
+    queryClient.invalidateQueries({ queryKey: ["quota-balance", orgId] });
+  };
 
-  const barColor = (pct: number) =>
-    pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-yellow-500" : "bg-primary";
+  // Quota calculations
+  const creditsRemaining = quota?.credits_remaining ?? 0;
+  const creditsLimit = quota?.credits_limit ?? 0;
+  const bonusRemaining = quota?.bonus_remaining ?? 0;
+  const extraCredits = quota?.extra_credits ?? 0;
+  const totalRemaining = creditsRemaining + bonusRemaining + extraCredits;
+  const percentUsed = quota?.percent_used ?? 0;
+
+  const planUsed = quota?.plan_used ?? 0;
+  const planTotal = quota?.plan_total ?? 0;
+  const bonusTotal = bonusRemaining + extraCredits;
+
+  const renewalDate = quota?.current_period_end
+    ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+    : "—";
+
+  const planBadgeClasses = getPlanBadgeClasses(quota?.plan_name);
 
   const featureRow = (label: string, value: string) => {
     return (
@@ -442,59 +531,113 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
     );
   };
 
-  const displayPlanName = (planName ?? quota?.plan_name ?? "Free");
-  const capitalizedPlan = displayPlanName.charAt(0).toUpperCase() + displayPlanName.slice(1);
-
   return (
     <div className="space-y-8">
-      {/* Current plan highlight */}
-      <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 max-w-2xl flex items-center gap-3">
-        <div className="rounded-full bg-primary p-2">
-          <CreditCard className="h-5 w-5 text-primary-foreground" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Seu plano atual</p>
-          <p className="text-lg font-bold text-primary">{capitalizedPlan}</p>
-        </div>
-      </div>
-
-      {/* Quota bar */}
-      <div className="rounded-xl border bg-card p-6 shadow-sm max-w-2xl">
-        <div className="flex items-center gap-1.5 mb-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Cotas do Plano
-          </p>
-          <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
-        </div>
-        <p className="text-[11px] text-muted-foreground mb-3">
-          As cotas são compartilhadas entre todas as ações. Combine prompts, SaaS Specs e builds livremente.
-        </p>
-        {quotaLoading ? (
-          <Skeleton className="h-10 w-full" />
-        ) : (
-          <>
-            <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
-              <div className={cn("h-full rounded-full transition-all", barColor(planPct))} style={{ width: `${Math.min(100, Math.max(0, planPct))}%` }} />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              <span className="text-foreground font-semibold">{quota?.credits_used ?? 0}</span> / {quota?.credits_limit ?? 0} usadas
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground font-semibold">{quota?.total_remaining ?? 0}</span> restantes
-              {((quota?.bonus_remaining ?? 0) > 0 || (quota?.extra_credits ?? 0) > 0) && (
-                <span className="text-muted-foreground text-[10px] ml-1">
-                  ({quota?.plan_remaining ?? 0} plano{(quota?.bonus_remaining ?? 0) > 0 ? ` + ${quota?.bonus_remaining} bônus` : ''}{(quota?.extra_credits ?? 0) > 0 ? ` + ${quota?.extra_credits} extras` : ''})
-                </span>
-              )}
-            </p>
-            {quota?.current_period_end && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Renova em {new Date(quota.current_period_end).toLocaleDateString("pt-BR")}
+      {/* ── Resumo da Conta Card ── */}
+      <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
+        <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md">
+          <div className="flex items-center justify-between gap-3">
+            <CollapsibleTrigger className="flex items-center justify-between flex-1 cursor-pointer gap-3">
+              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider shrink-0">
+                Resumo da Conta
               </p>
-            )}
-          </>
-        )}
-      </div>
+              {!resumoOpen && !quotaLoading && (
+                <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+                  <div className="h-1.5 w-20 shrink-0 rounded-full bg-blue-200/50 dark:bg-blue-800/40 overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all", percentUsed >= 80 ? "bg-destructive" : "bg-blue-500")}
+                      style={{ width: `${Math.min(100, percentUsed)}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
+                    Saldo: {totalRemaining} ({creditsRemaining} plano{bonusTotal > 0 ? ` + ${bonusTotal} bônus` : ''}) · Renova {renewalDate}
+                  </span>
+                </div>
+              )}
+              <ChevronDown className={cn("h-4 w-4 text-blue-500 transition-transform duration-200 shrink-0", resumoOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <button
+              onClick={handleRefreshQuota}
+              disabled={quotaFetching}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50"
+              title="Atualizar saldo"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", quotaFetching && "animate-spin")} />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+          </div>
+
+          <CollapsibleContent className="mt-4 space-y-6">
+            {/* Account Summary */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Visão Geral
+                </p>
+                <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  { icon: Crown, label: "Plano Atual", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary" },
+                  { icon: Zap, label: "Cotas Restantes", value: totalRemaining, sub: bonusRemaining > 0 || extraCredits > 0 ? `${creditsRemaining} plano${bonusRemaining > 0 ? ` + ${bonusRemaining} bônus` : ''}${extraCredits > 0 ? ` + ${extraCredits} extras` : ''}` : `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary" },
+                  { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent" },
+                  { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground" },
+                ].map((card, i) => (
+                  <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
+                    <BillingSummaryCard {...card} loading={quotaLoading} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Usage Progress - Plan Quotas */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Cotas do Plano
+                </p>
+                <InfoTooltip content="Cotas incluídas no seu plano mensal. Renovam automaticamente no próximo ciclo." />
+              </div>
+              {quotaLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <UsageProgressBar used={planUsed} limit={planTotal} />
+              )}
+            </div>
+
+            {/* Bonus + Extras Progress */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Bônus + Extras
+                </p>
+                <InfoTooltip content="Créditos adicionais de indicações e compras avulsas. Não expiram e são consumidos após as cotas do plano." />
+              </div>
+              {quotaLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="relative h-3 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80 transition-all duration-700"
+                      style={{ width: bonusTotal > 0 ? "100%" : "0%" }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+                    <span>
+                      <span className="text-foreground font-semibold">{bonusRemaining}</span> bônus
+                      {extraCredits > 0 && (
+                        <> + <span className="text-foreground font-semibold">{extraCredits}</span> extras</>
+                      )}
+                    </span>
+                    <span><span className="text-foreground font-semibold">{bonusTotal}</span> disponíveis</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
 
 
       {/* Credit Packs — ABOVE plans */}
