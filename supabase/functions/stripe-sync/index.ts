@@ -146,6 +146,65 @@ async function syncPrice(payload: SyncPayload) {
   }
 }
 
+async function upsertSubscriptionFromStripe(
+  stripeSubscription: Stripe.Subscription,
+  orgId: string
+): Promise<void> {
+  const priceId = stripeSubscription.items.data[0]?.price?.id;
+  if (!priceId) {
+    console.error("No price found in Stripe subscription");
+    return;
+  }
+
+  // Find local price by stripe_price_id
+  const { data: localPrice } = await admin
+    .from("billing_prices")
+    .select("id, product_id")
+    .eq("stripe_price_id", priceId)
+    .maybeSingle();
+
+  if (!localPrice) {
+    console.error("Local price not found for stripe_price_id:", priceId);
+    return;
+  }
+
+  const subData = {
+    id: stripeSubscription.id,
+    org_id: orgId,
+    price_id: localPrice.id,
+    status: stripeSubscription.status as any,
+    current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
+    current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
+    trial_start: stripeSubscription.trial_start
+      ? new Date(stripeSubscription.trial_start * 1000).toISOString()
+      : null,
+    trial_end: stripeSubscription.trial_end
+      ? new Date(stripeSubscription.trial_end * 1000).toISOString()
+      : null,
+    cancel_at: stripeSubscription.cancel_at
+      ? new Date(stripeSubscription.cancel_at * 1000).toISOString()
+      : null,
+    canceled_at: stripeSubscription.canceled_at
+      ? new Date(stripeSubscription.canceled_at * 1000).toISOString()
+      : null,
+    ended_at: stripeSubscription.ended_at
+      ? new Date(stripeSubscription.ended_at * 1000).toISOString()
+      : null,
+    metadata: stripeSubscription.metadata ?? null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: upsertError } = await admin
+    .from("billing_subscriptions")
+    .upsert(subData, { onConflict: "id" });
+
+  if (upsertError) {
+    console.error("Failed to upsert subscription:", upsertError);
+  } else {
+    console.log("Subscription upserted:", stripeSubscription.id, "for org:", orgId);
+  }
+}
+
 async function handleStripeWebhook(req: Request): Promise<Response> {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -156,11 +215,13 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
       const event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
       console.log("Stripe webhook event:", event.type);
 
+      // Handle checkout.session.completed
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
         const orgId = session.metadata?.org_id;
 
         if (session.metadata?.type === "topup") {
+          // Handle topup purchase
           const purchaseId = session.metadata.purchase_id;
           if (purchaseId) {
             const { error } = await admin.rpc("process_credit_purchase", {
@@ -170,16 +231,51 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
             if (error) console.error("Failed to process topup:", error);
             else console.log("Topup processed for purchase:", purchaseId);
           }
-        } else if (orgId) {
-          const { error } = await admin
+        } else if (session.mode === "subscription" && session.subscription && orgId) {
+          // Handle subscription checkout - create billing_subscription record
+          console.log("Processing subscription checkout for org:", orgId);
+          const stripeSubscription = await stripe.subscriptions.retrieve(
+            session.subscription as string
+          );
+          await upsertSubscriptionFromStripe(stripeSubscription, orgId);
+
+          // Reset plan credits for the new subscription
+          await admin
             .from("organizations")
             .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
             .eq("id", orgId);
-          if (error) console.error("Failed to reset credits:", error);
-          else console.log("Credits reset for org:", orgId);
+          console.log("Credits reset for org:", orgId);
         }
       }
 
+      // Handle subscription created/updated events
+      if (
+        event.type === "customer.subscription.created" ||
+        event.type === "customer.subscription.updated"
+      ) {
+        const stripeSubscription = event.data.object as Stripe.Subscription;
+        const orgId = stripeSubscription.metadata?.org_id;
+
+        if (orgId) {
+          await upsertSubscriptionFromStripe(stripeSubscription, orgId);
+        } else {
+          // Try to find org by customer ID
+          const customerId = stripeSubscription.customer as string;
+          const { data: org } = await admin
+            .from("organizations")
+            .select("id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+
+          if (org) {
+            await upsertSubscriptionFromStripe(stripeSubscription, org.id);
+          } else {
+            console.warn("Could not find org for subscription:", stripeSubscription.id);
+          }
+        }
+      }
+
+      // Handle invoice.payment_succeeded
       if (event.type === "invoice.payment_succeeded") {
         const invoice = event.data.object as Stripe.Invoice;
         const subId = invoice.subscription as string | null;
@@ -212,7 +308,7 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
     }
   }
 
-  return new Response(null, { status: 0 });
+  return new Response(null, { status: 400 });
 }
 
 Deno.serve(async (req) => {

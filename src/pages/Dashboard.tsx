@@ -329,13 +329,17 @@ export default function Dashboard() {
               </h1>
               <p className="mt-1 text-muted-foreground">O que vamos construir hoje?</p>
             </div>
-            <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider shadow-sm",
-              planBadgeClasses
-            )}>
+            <button
+              onClick={() => navigate("/profile?tab=billing")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer hover:scale-105 transition-transform",
+                planBadgeClasses
+              )}
+              title="Ver planos disponíveis"
+            >
               <Crown className="w-3.5 h-3.5" />
               Plano {(quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase())}
-            </div>
+            </button>
           </div>
         )}
       </section>

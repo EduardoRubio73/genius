@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.send-whatsapp-otp]
 verify_jwt = false
+
+[functions.sync-stripe-subscription]
+verify_jwt = false
