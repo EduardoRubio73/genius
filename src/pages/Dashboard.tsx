@@ -340,28 +340,38 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* ── Card 1: Resumo da Conta (azul, recolhido) ── */}
       <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
         <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md mb-4">
-          <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer gap-3">
-            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider shrink-0">
-              Resumo da Conta
-            </p>
-            {!resumoOpen && !isQuotaLoading && (
-              <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-                <div className="h-1.5 w-20 shrink-0 rounded-full bg-blue-200/50 dark:bg-blue-800/40 overflow-hidden">
-                  <div
-                    className={cn("h-full rounded-full transition-all", percentUsed >= 80 ? "bg-destructive" : "bg-blue-500")}
-                    style={{ width: `${Math.min(100, percentUsed)}%` }}
-                  />
+          <div className="flex items-center justify-between gap-3">
+            <CollapsibleTrigger className="flex items-center justify-between flex-1 cursor-pointer gap-3">
+              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider shrink-0">
+                Resumo da Conta
+              </p>
+              {!resumoOpen && !isQuotaLoading && (
+                <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+                  <div className="h-1.5 w-20 shrink-0 rounded-full bg-blue-200/50 dark:bg-blue-800/40 overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all", percentUsed >= 80 ? "bg-destructive" : "bg-blue-500")}
+                      style={{ width: `${Math.min(100, percentUsed)}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
+                    {creditsUsed}/{creditsLimit} cotas · Renova {renewalDate}
+                  </span>
                 </div>
-                <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
-                  {creditsUsed}/{creditsLimit} cotas · Renova {renewalDate}
-                </span>
-              </div>
-            )}
-            <ChevronDown className={cn("h-4 w-4 text-blue-500 transition-transform duration-200 shrink-0", resumoOpen && "rotate-180")} />
-          </CollapsibleTrigger>
+              )}
+              <ChevronDown className={cn("h-4 w-4 text-blue-500 transition-transform duration-200 shrink-0", resumoOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <button
+              onClick={handleRefreshQuota}
+              disabled={quotaFetching}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50"
+              title="Atualizar saldo"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", quotaFetching && "animate-spin")} />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+          </div>
 
           <CollapsibleContent className="mt-4 space-y-6">
             {/* Account Summary */}
