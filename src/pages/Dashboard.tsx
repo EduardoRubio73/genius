@@ -356,7 +356,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
-                    {creditsUsed}/{creditsLimit} cotas · Renova {renewalDate}
+                    Saldo: {totalRemaining} ({creditsRemaining} plano{bonusTotal > 0 ? ` + ${bonusTotal} bônus` : ''}) · Renova {renewalDate}
                   </span>
                 </div>
               )}
