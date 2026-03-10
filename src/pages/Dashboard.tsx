@@ -11,6 +11,7 @@ import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { DashboardDock } from "@/components/dashboard/DashboardDock";
+import { ShareModal } from "@/components/dashboard/ShareModal";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 // ── Helpers ──
