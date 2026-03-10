@@ -127,9 +127,9 @@ export function UnifiedMemoryDetailDialog({
       })
     : null;
 
-  // For SaaS specs, show answers as structured fields
+  // For SaaS specs and Build projects, show answers as structured fields
   const saasAnswers =
-    entry.type === "saas" && entry.answers
+    (entry.type === "saas" || entry.type === "build") && entry.answers
       ? Object.entries(entry.answers as Record<string, string>).filter(([, v]) => v)
       : [];
 

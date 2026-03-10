@@ -236,14 +236,14 @@ export function useUnifiedMemory({
 
   const counts = useMemo(
     () => ({
-      all: promptEntries.length + saasEntries.length,
+      all: promptEntries.length + saasEntries.length + buildEntries.length,
       prompt: promptEntries.filter((e) => e.type === "prompt").length,
       saas: saasEntries.length,
       mixed: promptEntries.filter((e) => e.type === "mixed").length,
-      build: 0,
-      favorites: [...promptEntries, ...saasEntries].filter((e) => e.is_favorite).length,
+      build: buildEntries.length,
+      favorites: [...promptEntries, ...saasEntries, ...buildEntries].filter((e) => e.is_favorite).length,
     }),
-    [promptEntries, saasEntries]
+    [promptEntries, saasEntries, buildEntries]
   );
 
   return { entries: allEntries, isLoading, toggleFavorite, deleteEntry, counts };
