@@ -14,6 +14,16 @@ const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 const stripe = new Stripe(stripeSecret, { apiVersion: "2024-06-20" });
 const admin = createClient(supabaseUrl, serviceRoleKey);
 
+/** Safely convert a Stripe unix timestamp to ISO string, or return null */
+function safeTimestamp(val: unknown): string | null {
+  if (typeof val !== "number" || !isFinite(val) || val <= 0) return null;
+  try {
+    return new Date(val * 1000).toISOString();
+  } catch {
+    return null;
+  }
+}
+
 function jsonResponse(status: number, payload: Record<string, unknown>) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -105,30 +115,51 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Use item-level period if available, fallback to subscription-level
+      const item = stripeSub.items.data[0];
+      const periodStart = (item as any)?.current_period_start ?? stripeSub.current_period_start;
+      const periodEnd = (item as any)?.current_period_end ?? stripeSub.current_period_end;
+
+      const periodStartISO = safeTimestamp(periodStart);
+      const periodEndISO = safeTimestamp(periodEnd);
+
+      const now = new Date().toISOString();
+      const oneMonthLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Deactivate old active subscriptions if this one is active
+      if (stripeSub.status === "active" || stripeSub.status === "trialing") {
+        const { data: existingActive } = await admin
+          .from("billing_subscriptions")
+          .select("id")
+          .eq("org_id", orgId)
+          .in("status", ["active", "trialing"])
+          .neq("id", stripeSub.id);
+
+        if (existingActive && existingActive.length > 0) {
+          for (const old of existingActive) {
+            console.log("Deactivating old subscription:", old.id);
+            await admin
+              .from("billing_subscriptions")
+              .update({ status: "canceled", canceled_at: now, updated_at: now })
+              .eq("id", old.id);
+          }
+        }
+      }
+
       const subData = {
         id: stripeSub.id,
         org_id: orgId,
         price_id: localPrice.id,
         status: stripeSub.status as any,
-        current_period_start: new Date(stripeSub.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(stripeSub.current_period_end * 1000).toISOString(),
-        trial_start: stripeSub.trial_start
-          ? new Date(stripeSub.trial_start * 1000).toISOString()
-          : null,
-        trial_end: stripeSub.trial_end
-          ? new Date(stripeSub.trial_end * 1000).toISOString()
-          : null,
-        cancel_at: stripeSub.cancel_at
-          ? new Date(stripeSub.cancel_at * 1000).toISOString()
-          : null,
-        canceled_at: stripeSub.canceled_at
-          ? new Date(stripeSub.canceled_at * 1000).toISOString()
-          : null,
-        ended_at: stripeSub.ended_at
-          ? new Date(stripeSub.ended_at * 1000).toISOString()
-          : null,
+        current_period_start: periodStartISO ?? now,
+        current_period_end: periodEndISO ?? oneMonthLater,
+        trial_start: safeTimestamp(stripeSub.trial_start),
+        trial_end: safeTimestamp(stripeSub.trial_end),
+        cancel_at: safeTimestamp(stripeSub.cancel_at),
+        canceled_at: safeTimestamp(stripeSub.canceled_at),
+        ended_at: safeTimestamp(stripeSub.ended_at),
         metadata: { ...stripeSub.metadata, org_id: orgId },
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       };
 
       const { error: upsertError } = await admin
@@ -143,14 +174,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // The trigger sync_org_plan will update the organization automatically
-    // But let's also reset credits if there's an active subscription
+    // Check if org was updated by the trigger
     const activeStatuses = ["active", "trialing"];
     const hasActiveSub = subscriptions.data.some(s => activeStatuses.includes(s.status));
     
     if (hasActiveSub) {
-      // The trigger should have updated plan_tier and plan_credits_total
-      // We just need to ensure it ran by checking
       const { data: updatedOrg } = await admin
         .from("organizations")
         .select("plan_tier, plan_credits_total")

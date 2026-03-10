@@ -20,6 +20,16 @@ type SyncPayload = {
   old_record?: Record<string, unknown> | null;
 };
 
+/** Safely convert a Stripe unix timestamp to ISO string, or return null */
+function safeTimestamp(val: unknown): string | null {
+  if (typeof val !== "number" || !isFinite(val) || val <= 0) return null;
+  try {
+    return new Date(val * 1000).toISOString();
+  } catch {
+    return null;
+  }
+}
+
 async function syncProduct(payload: SyncPayload) {
   const product = payload.new_record;
   const productId = String(product.id);
@@ -146,6 +156,29 @@ async function syncPrice(payload: SyncPayload) {
   }
 }
 
+/**
+ * Cancel any existing active subscriptions for the org that differ from the incoming one.
+ * This prevents unique constraint violations on uniq_active_subscription_per_org.
+ */
+async function deactivateOldSubscriptions(orgId: string, newSubId: string): Promise<void> {
+  const { data: existingActive } = await admin
+    .from("billing_subscriptions")
+    .select("id")
+    .eq("org_id", orgId)
+    .in("status", ["active", "trialing"])
+    .neq("id", newSubId);
+
+  if (existingActive && existingActive.length > 0) {
+    for (const old of existingActive) {
+      console.log("Deactivating old subscription:", old.id, "for org:", orgId);
+      await admin
+        .from("billing_subscriptions")
+        .update({ status: "canceled", canceled_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", old.id);
+    }
+  }
+}
+
 async function upsertSubscriptionFromStripe(
   stripeSubscription: Stripe.Subscription,
   orgId: string
@@ -168,30 +201,37 @@ async function upsertSubscriptionFromStripe(
     return;
   }
 
+  // Use item-level period if available, fallback to subscription-level
+  const item = stripeSubscription.items.data[0];
+  const periodStart = (item as any)?.current_period_start ?? stripeSubscription.current_period_start;
+  const periodEnd = (item as any)?.current_period_end ?? stripeSubscription.current_period_end;
+
+  const periodStartISO = safeTimestamp(periodStart);
+  const periodEndISO = safeTimestamp(periodEnd);
+
+  // If we still can't get valid period dates, use sensible defaults
+  const now = new Date().toISOString();
+  const oneMonthLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Deactivate old subscriptions to avoid unique constraint violation
+  if (stripeSubscription.status === "active" || stripeSubscription.status === "trialing") {
+    await deactivateOldSubscriptions(orgId, stripeSubscription.id);
+  }
+
   const subData = {
     id: stripeSubscription.id,
     org_id: orgId,
     price_id: localPrice.id,
     status: stripeSubscription.status as any,
-    current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
-    trial_start: stripeSubscription.trial_start
-      ? new Date(stripeSubscription.trial_start * 1000).toISOString()
-      : null,
-    trial_end: stripeSubscription.trial_end
-      ? new Date(stripeSubscription.trial_end * 1000).toISOString()
-      : null,
-    cancel_at: stripeSubscription.cancel_at
-      ? new Date(stripeSubscription.cancel_at * 1000).toISOString()
-      : null,
-    canceled_at: stripeSubscription.canceled_at
-      ? new Date(stripeSubscription.canceled_at * 1000).toISOString()
-      : null,
-    ended_at: stripeSubscription.ended_at
-      ? new Date(stripeSubscription.ended_at * 1000).toISOString()
-      : null,
+    current_period_start: periodStartISO ?? now,
+    current_period_end: periodEndISO ?? oneMonthLater,
+    trial_start: safeTimestamp(stripeSubscription.trial_start),
+    trial_end: safeTimestamp(stripeSubscription.trial_end),
+    cancel_at: safeTimestamp(stripeSubscription.cancel_at),
+    canceled_at: safeTimestamp(stripeSubscription.canceled_at),
+    ended_at: safeTimestamp(stripeSubscription.ended_at),
     metadata: stripeSubscription.metadata ?? null,
-    updated_at: new Date().toISOString(),
+    updated_at: now,
   };
 
   const { error: upsertError } = await admin
@@ -200,6 +240,7 @@ async function upsertSubscriptionFromStripe(
 
   if (upsertError) {
     console.error("Failed to upsert subscription:", upsertError);
+    throw new Error(`Upsert subscription failed: ${upsertError.message}`);
   } else {
     console.log("Subscription upserted:", stripeSubscription.id, "for org:", orgId);
   }
@@ -210,105 +251,116 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
   const sig = req.headers.get("stripe-signature");
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
-  if (sig && webhookSecret) {
-    try {
-      const event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
-      console.log("Stripe webhook event:", event.type);
+  if (!sig || !webhookSecret) {
+    return new Response(JSON.stringify({ error: "Missing signature or webhook secret" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
-      // Handle checkout.session.completed
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const orgId = session.metadata?.org_id;
+  let event: Stripe.Event;
+  try {
+    event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return new Response(JSON.stringify({ error: "Invalid signature" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
-        if (session.metadata?.type === "topup") {
-          // Handle topup purchase
-          const purchaseId = session.metadata.purchase_id;
-          if (purchaseId) {
-            const { error } = await admin.rpc("process_credit_purchase", {
-              p_purchase_id: purchaseId,
-              p_stripe_pi_id: (session.payment_intent as string) ?? "",
-            });
-            if (error) console.error("Failed to process topup:", error);
-            else console.log("Topup processed for purchase:", purchaseId);
-          }
-        } else if (session.mode === "subscription" && session.subscription && orgId) {
-          // Handle subscription checkout - create billing_subscription record
-          console.log("Processing subscription checkout for org:", orgId);
-          const stripeSubscription = await stripe.subscriptions.retrieve(
-            session.subscription as string
-          );
-          await upsertSubscriptionFromStripe(stripeSubscription, orgId);
+  // Signature verified — now process the event. Errors here should return 500 so Stripe retries.
+  try {
+    console.log("Stripe webhook event:", event.type);
 
-          // Reset plan credits for the new subscription
+    // Handle checkout.session.completed
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const orgId = session.metadata?.org_id;
+
+      if (session.metadata?.type === "topup") {
+        const purchaseId = session.metadata.purchase_id;
+        if (purchaseId) {
+          const { error } = await admin.rpc("process_credit_purchase", {
+            p_purchase_id: purchaseId,
+            p_stripe_pi_id: (session.payment_intent as string) ?? "",
+          });
+          if (error) console.error("Failed to process topup:", error);
+          else console.log("Topup processed for purchase:", purchaseId);
+        }
+      } else if (session.mode === "subscription" && session.subscription && orgId) {
+        console.log("Processing subscription checkout for org:", orgId);
+        const stripeSubscription = await stripe.subscriptions.retrieve(
+          session.subscription as string
+        );
+        await upsertSubscriptionFromStripe(stripeSubscription, orgId);
+
+        await admin
+          .from("organizations")
+          .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
+          .eq("id", orgId);
+        console.log("Credits reset for org:", orgId);
+      }
+    }
+
+    // Handle subscription created/updated events
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated"
+    ) {
+      const stripeSubscription = event.data.object as Stripe.Subscription;
+      const orgId = stripeSubscription.metadata?.org_id;
+
+      if (orgId) {
+        await upsertSubscriptionFromStripe(stripeSubscription, orgId);
+      } else {
+        const customerId = stripeSubscription.customer as string;
+        const { data: org } = await admin
+          .from("organizations")
+          .select("id")
+          .eq("stripe_customer_id", customerId)
+          .maybeSingle();
+
+        if (org) {
+          await upsertSubscriptionFromStripe(stripeSubscription, org.id);
+        } else {
+          console.warn("Could not find org for subscription:", stripeSubscription.id);
+        }
+      }
+    }
+
+    // Handle invoice.payment_succeeded
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subId = invoice.subscription as string | null;
+      if (subId) {
+        const { data: sub } = await admin
+          .from("billing_subscriptions")
+          .select("org_id")
+          .eq("id", subId)
+          .maybeSingle();
+        if (sub?.org_id) {
           await admin
             .from("organizations")
             .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
-            .eq("id", orgId);
-          console.log("Credits reset for org:", orgId);
+            .eq("id", sub.org_id);
+          console.log("Credits reset via invoice for org:", sub.org_id);
         }
       }
-
-      // Handle subscription created/updated events
-      if (
-        event.type === "customer.subscription.created" ||
-        event.type === "customer.subscription.updated"
-      ) {
-        const stripeSubscription = event.data.object as Stripe.Subscription;
-        const orgId = stripeSubscription.metadata?.org_id;
-
-        if (orgId) {
-          await upsertSubscriptionFromStripe(stripeSubscription, orgId);
-        } else {
-          // Try to find org by customer ID
-          const customerId = stripeSubscription.customer as string;
-          const { data: org } = await admin
-            .from("organizations")
-            .select("id")
-            .eq("stripe_customer_id", customerId)
-            .maybeSingle();
-
-          if (org) {
-            await upsertSubscriptionFromStripe(stripeSubscription, org.id);
-          } else {
-            console.warn("Could not find org for subscription:", stripeSubscription.id);
-          }
-        }
-      }
-
-      // Handle invoice.payment_succeeded
-      if (event.type === "invoice.payment_succeeded") {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subId = invoice.subscription as string | null;
-        if (subId) {
-          const { data: sub } = await admin
-            .from("billing_subscriptions")
-            .select("org_id")
-            .eq("id", subId)
-            .maybeSingle();
-          if (sub?.org_id) {
-            await admin
-              .from("organizations")
-              .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
-              .eq("id", sub.org_id);
-            console.log("Credits reset via invoice for org:", sub.org_id);
-          }
-        }
-      }
-
-      return new Response(JSON.stringify({ received: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    } catch (err) {
-      console.error("Webhook signature verification failed:", err);
-      return new Response(JSON.stringify({ error: "Invalid signature" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
-  }
 
-  return new Response(null, { status: 400 });
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (processingError) {
+    // Processing failed AFTER signature was verified — return 500 so Stripe retries
+    console.error("Webhook processing error:", processingError);
+    return new Response(JSON.stringify({ error: "Internal processing error", details: String(processingError) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 }
 
 Deno.serve(async (req) => {
