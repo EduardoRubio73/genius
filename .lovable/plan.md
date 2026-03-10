@@ -1,36 +1,45 @@
 
 
-# Problem: Admin Users Page Not Showing All Users
+## Fix: Admin Credits Not Saving
 
-## Root Cause
+### Root Causes
 
-The `admin_users_overview` view has `security_invoker=true` and JOINs three tables:
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+
+### Solution
+
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-profiles p → org_members om → organizations o
-```
-
-The super admin has SELECT access on `profiles` and `organizations` (via `admin_profiles_select` and `admin_orgs_select` policies), but **`org_members` has NO super admin SELECT policy**. The only SELECT policy on `org_members` is:
-
-```sql
-members_select_same_org: org_id = ANY (get_user_org_ids())
-```
-
-This means the super admin can only see `org_members` rows for their **own** organizations. The JOIN silently drops all other users, making only the admin's own account (or orgs they belong to) visible.
-
-## Fix
-
-Add a permissive SELECT policy on `org_members` for super admins:
-
-```sql
-CREATE POLICY "admin_org_members_select"
-ON public.org_members
-FOR SELECT
-TO authenticated
-USING (is_super_admin());
-```
-
-This single migration will fix the admin users page to show all users.
-
-## Files to Change
-- **Database migration only** -- no code changes needed.
 
