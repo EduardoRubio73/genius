@@ -137,6 +137,26 @@ export default function AdminStripeSettings() {
             <option value="PRODUCTION">PRODUCTION</option>
           </select>
         </Field>
+        <Field label="URL do Stripe Dashboard">
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              className="adm-input mono"
+              value={form.stripe_dashboard_url}
+              onChange={(e) => setForm((f) => ({ ...f, stripe_dashboard_url: e.target.value }))}
+              placeholder="https://dashboard.stripe.com/..."
+              style={{ flex: 1 }}
+            />
+            <a
+              href={form.stripe_dashboard_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="adm-btn outline"
+              style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", textDecoration: "none" }}
+            >
+              <ExternalLink size={14} /> Acessar
+            </a>
+          </div>
+        </Field>
       </div>
 
       {/* Webhook Configuration */}
