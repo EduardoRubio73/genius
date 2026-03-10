@@ -208,6 +208,8 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
+      <DashboardDock sessionCount={sessions.length} onShareOpen={() => setShareOpen(true)} />
+      <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
     </AppShell>
   );
 }

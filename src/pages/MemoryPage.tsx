@@ -253,6 +253,8 @@ export default function MemoryPage() {
         onToggleFavorite={handleToggleFav}
         onDelete={(e) => { handleDelete(e); setSelectedEntry(null); }}
       />
+      <DashboardDock onShareOpen={() => setShareOpen(true)} />
+      <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
     </AppShell>
   );
 }
