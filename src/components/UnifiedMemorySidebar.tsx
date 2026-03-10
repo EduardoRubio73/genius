@@ -414,6 +414,7 @@ export function UnifiedMemorySidebar({
               {[
                 { icon: Sparkles, count: counts.prompt, label: "Prompts", color: "text-primary" },
                 { icon: FileCode, count: counts.saas, label: "Specs", color: "text-accent" },
+                { icon: Rocket, count: counts.build, label: "Builds", color: "text-orange-500" },
                 { icon: Heart, count: counts.favorites, label: "Favoritos", color: "text-rose-400" },
               ].map(({ icon: Icon, count, label, color }) => (
                 <Tooltip key={label}>
