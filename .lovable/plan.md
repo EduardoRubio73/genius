@@ -1,45 +1,80 @@
 
 
-## Fix: Admin Credits Not Saving
+# Plano: Corrigir contabilização de créditos + unificar cards Dashboard/Profile
 
-### Root Causes
+## Problema Principal (Bug Crítico no Backend)
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+A função `process_credit_purchase` (RPC no Supabase) está **adicionando créditos comprados ao campo errado**:
 
-### Solution
-
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
-
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
-
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```sql
+-- ATUAL (ERRADO):
+UPDATE public.organizations SET
+    bonus_credits_total = bonus_credits_total + v_purchase.credits_granted
 ```
+
+Créditos comprados vão para `bonus_credits_total` (que deveria ser só indicações), mas o frontend lê `extra_credits` de `org_credits.extra_balance` (que nunca é atualizado por compras). Resultado:
+- **Bônus** inflado com compras (mostra 11 = 10 de compras + 1?)
+- **Créditos Extras** sempre 0 (nunca escrito)
+- A compra recente de 40 créditos (`pi_3T9NLtBmEyQZSY7V0rs02wqq`) provavelmente foi para `bonus_credits_total`
+
+## Correções
+
+### 1. Corrigir `process_credit_purchase` (Migration SQL)
+
+Substituir a lógica de adicionar a `bonus_credits_total` por chamar `add_extra_credits()`, que já atualiza corretamente `org_credits.extra_balance` e registra a transação no ledger.
+
+```sql
+CREATE OR REPLACE FUNCTION public.process_credit_purchase(...)
+-- Remover: UPDATE organizations SET bonus_credits_total = ...
+-- Remover: INSERT INTO credit_transactions (manual)
+-- Usar: PERFORM add_extra_credits(v_purchase.org_id, v_purchase.credits_granted, 'stripe_topup');
+```
+
+### 2. Migrar dados existentes (Migration SQL)
+
+Mover os créditos que foram incorretamente adicionados a `bonus_credits_total` de volta para `org_credits.extra_balance`. Isso requer identificar compras pagas e ajustar os saldos.
+
+```sql
+-- Para cada compra paga, reverter de bonus_credits_total e adicionar a extra_balance
+UPDATE organizations o SET
+    bonus_credits_total = bonus_credits_total - COALESCE(purchased.total, 0)
+FROM (
+    SELECT org_id, SUM(credits_granted) as total
+    FROM credit_purchases WHERE status = 'paid'
+    GROUP BY org_id
+) purchased
+WHERE o.id = purchased.org_id;
+
+UPDATE org_credits oc SET
+    extra_balance = extra_balance + COALESCE(purchased.total, 0)
+FROM (
+    SELECT org_id, SUM(credits_granted) as total
+    FROM credit_purchases WHERE status = 'paid'
+    GROUP BY org_id
+) purchased
+WHERE oc.org_id = purchased.org_id;
+```
+
+### 3. Processar a compra pendente de 40 créditos
+
+Verificar se a compra com `stripe_payment_intent_id = 'pi_3T9NLtBmEyQZSY7V0rs02wqq'` foi processada. Se estiver `pending`, precisa ser processada manualmente ou o webhook precisa ser re-disparado.
+
+### 4. Unificar cards Profile com Dashboard
+
+**Arquivo**: `src/pages/ProfilePage.tsx`
+
+Substituir os 4 cards antigos (Plano Atual, Cotas Restantes, Bônus, Renovação) pelos mesmos 5 cards do Dashboard:
+1. Plano Atual
+2. Cotas do Plano
+3. Créditos Extras
+4. Bônus
+5. Saldo Total
+
+Copiar exatamente a mesma estrutura de grid e dados do Dashboard.
+
+## Arquivos a Modificar
+
+1. **Migration SQL** - Corrigir `process_credit_purchase`, migrar dados, processar compra pendente
+2. **`src/pages/ProfilePage.tsx`** - Unificar cards com Dashboard (5 indicadores)
+3. **`supabase/functions/stripe-sync/index.ts`** - Nenhuma alteração necessária (já chama `process_credit_purchase` corretamente)
 
