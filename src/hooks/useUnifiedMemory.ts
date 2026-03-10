@@ -177,7 +177,7 @@ export function useUnifiedMemory({
   }, [refreshKey, filter, orgId]);
 
   const allEntries = useMemo(() => {
-    let combined = [...promptEntries, ...saasEntries].sort((a, b) => {
+    let combined = [...promptEntries, ...saasEntries, ...buildEntries].sort((a, b) => {
       // Sort: favorites first, then by created_at desc, then by title asc (A-Z)
       if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
       const dateCompare = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
