@@ -31,6 +31,7 @@ export default function AdminStripeSettings() {
     stripe_publishable_key: "",
     stripe_webhook_secret: "",
     stripe_mode: "TEST",
+    stripe_dashboard_url: "https://dashboard.stripe.com/acct_1T6qgVBmEyQZSY7V/test/dashboard",
   });
   const [webhookEvents, setWebhookEvents] = useState<string[]>(DEFAULT_EVENTS);
   const [newEvent, setNewEvent] = useState("");
