@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Plus, X, Check } from "lucide-react";
+import { Copy, Plus, X, Check, ExternalLink } from "lucide-react";
 import "./admin.css";
 
 const WEBHOOK_URL = "https://pcaebfncvuvdguyjmyxm.supabase.co/functions/v1/stripe-sync";
@@ -20,6 +20,7 @@ const settingsKeys = [
   "stripe_publishable_key",
   "stripe_webhook_secret",
   "stripe_mode",
+  "stripe_dashboard_url",
 ] as const;
 
 export default function AdminStripeSettings() {
@@ -30,6 +31,7 @@ export default function AdminStripeSettings() {
     stripe_publishable_key: "",
     stripe_webhook_secret: "",
     stripe_mode: "TEST",
+    stripe_dashboard_url: "https://dashboard.stripe.com/acct_1T6qgVBmEyQZSY7V/test/dashboard",
   });
   const [webhookEvents, setWebhookEvents] = useState<string[]>(DEFAULT_EVENTS);
   const [newEvent, setNewEvent] = useState("");
@@ -134,6 +136,26 @@ export default function AdminStripeSettings() {
             <option value="TEST">TEST</option>
             <option value="PRODUCTION">PRODUCTION</option>
           </select>
+        </Field>
+        <Field label="URL do Stripe Dashboard">
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              className="adm-input mono"
+              value={form.stripe_dashboard_url}
+              onChange={(e) => setForm((f) => ({ ...f, stripe_dashboard_url: e.target.value }))}
+              placeholder="https://dashboard.stripe.com/..."
+              style={{ flex: 1 }}
+            />
+            <a
+              href={form.stripe_dashboard_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="adm-btn outline"
+              style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", textDecoration: "none" }}
+            >
+              <ExternalLink size={14} /> Acessar
+            </a>
+          </div>
         </Field>
       </div>
 

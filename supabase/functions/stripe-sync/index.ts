@@ -212,7 +212,7 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
 
   if (sig && webhookSecret) {
     try {
-      const event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+      const event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
       console.log("Stripe webhook event:", event.type);
 
       // Handle checkout.session.completed
