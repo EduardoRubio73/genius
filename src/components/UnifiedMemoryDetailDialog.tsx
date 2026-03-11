@@ -177,8 +177,11 @@ export function UnifiedMemoryDetailDialog({
           <DialogTitle className="text-lg font-semibold mt-2">{entry.title}</DialogTitle>
 
           {createdDate && (
-            <DialogDescription className="text-xs text-muted-foreground">
+            <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2">
               Criado em {createdDate}
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium">
+                {CREDIT_COSTS[entry.type] ?? 1} crédito{(CREDIT_COSTS[entry.type] ?? 1) !== 1 ? "s" : ""} consumido{(CREDIT_COSTS[entry.type] ?? 1) !== 1 ? "s" : ""}
+              </span>
             </DialogDescription>
           )}
         </DialogHeader>
