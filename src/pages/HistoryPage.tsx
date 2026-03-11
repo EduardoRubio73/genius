@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronDown, ChevronUp, Sparkles, FileCode, Layers, CheckCircle, Clock, Eye, ArrowLeft, Hammer } from "lucide-react";
+import { ChevronDown, ChevronUp, Sparkles, FileCode, Layers, CheckCircle, Clock, Eye, ArrowLeft, Hammer, Zap } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { DashboardDock } from "@/components/dashboard/DashboardDock";
 import { ShareModal } from "@/components/dashboard/ShareModal";
+import { SessionDetailDialog } from "@/components/history/SessionDetailDialog";
+import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -20,6 +22,7 @@ interface Session {
   tokens_total: number;
   created_at: string;
   updated_at: string;
+  has_output?: boolean;
 }
 
 const MODE_META: Record<string, { label: string; icon: React.ElementType; cls: string; route: string }> = {
@@ -29,6 +32,8 @@ const MODE_META: Record<string, { label: string; icon: React.ElementType; cls: s
   build: { label: "Build", icon: Hammer, cls: "text-warning", route: "/build" },
 };
 
+const MODE_COSTS: Record<string, number> = { prompt: 1, saas: 2, misto: 2, build: 5 };
+
 function getDuration(created: string, updated: string): string {
   const diff = new Date(updated).getTime() - new Date(created).getTime();
   const mins = Math.round(diff / 60000);
@@ -37,12 +42,12 @@ function getDuration(created: string, updated: string): string {
   return `${(mins / 60).toFixed(1)}h`;
 }
 
-function SessionCard({ session }: { session: Session }) {
-  const navigate = useNavigate();
+function SessionCard({ session, onView }: { session: Session; onView: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const meta = MODE_META[session.mode] ?? MODE_META.prompt;
   const Icon = meta.icon;
   const longInput = (session.raw_input?.length ?? 0) > 100;
+  const isFinished = session.completed || session.has_output;
 
   return (
     <div className="rounded-xl border border-border/60 bg-card/80 p-4 transition-colors hover:border-border">
@@ -53,11 +58,11 @@ function SessionCard({ session }: { session: Session }) {
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className={cn("text-xs font-bold uppercase tracking-wider", meta.cls)}>{meta.label}</span>
           <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-            session.completed
+            isFinished
               ? "border-primary/20 bg-primary/10 text-primary"
               : "border-warning/20 bg-warning/10 text-warning"
           )}>
-            {session.completed ? <><CheckCircle className="h-3 w-3" /> Concluída</> : <><Clock className="h-3 w-3" /> Incompleta</>}
+            {isFinished ? <><CheckCircle className="h-3 w-3" /> Finalizada</> : <><Clock className="h-3 w-3" /> Em andamento</>}
           </span>
           {session.raw_input && (
             <p className="text-xs text-muted-foreground truncate flex-1 min-w-0 hidden sm:block">
@@ -70,7 +75,7 @@ function SessionCard({ session }: { session: Session }) {
           <span>{formatDistanceToNow(new Date(session.created_at), { addSuffix: true, locale: ptBR })}</span>
           <span className="text-[10px] opacity-60">{getDuration(session.created_at, session.updated_at)}</span>
           <button
-            onClick={() => navigate(`${meta.route}?session=${session.id}`)}
+            onClick={onView}
             className="flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors"
           >
             <Eye className="h-3 w-3" /> Ver
@@ -96,13 +101,15 @@ export default function HistoryPage() {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
-  
+  const { data: quota } = useQuotaBalance(orgId);
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modeFilter, setModeFilter] = useState<"all" | "prompt" | "saas" | "misto" | "build">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "incomplete">("all");
   const [shareOpen, setShareOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
   useEffect(() => {
     if (!orgId) return;
@@ -114,7 +121,30 @@ export default function HistoryPage() {
         .eq("org_id", orgId)
         .order("created_at", { ascending: false })
         .limit(50);
-      setSessions((data as Session[]) ?? []);
+
+      const rawSessions = (data as Session[]) ?? [];
+
+      // Check which sessions have linked outputs to fix status
+      const sessionIds = rawSessions.map((s) => s.id);
+      
+      const [{ data: prompts }, { data: specs }, { data: builds }] = await Promise.all([
+        supabase.from("prompt_memory").select("session_id").in("session_id", sessionIds),
+        supabase.from("saas_specs").select("session_id").in("session_id", sessionIds),
+        supabase.from("build_projects").select("session_id").in("session_id", sessionIds),
+      ]);
+
+      const outputSessionIds = new Set([
+        ...(prompts ?? []).map((p) => p.session_id),
+        ...(specs ?? []).map((s) => s.session_id),
+        ...(builds ?? []).map((b) => b.session_id),
+      ]);
+
+      const enriched = rawSessions.map((s) => ({
+        ...s,
+        has_output: outputSessionIds.has(s.id),
+      }));
+
+      setSessions(enriched);
       setIsLoading(false);
     };
     fetchSessions();
@@ -123,13 +153,27 @@ export default function HistoryPage() {
   const filtered = useMemo(() => {
     let result = sessions;
     if (modeFilter !== "all") result = result.filter((s) => s.mode === modeFilter);
-    if (statusFilter === "completed") result = result.filter((s) => s.completed);
-    if (statusFilter === "incomplete") result = result.filter((s) => !s.completed);
+    if (statusFilter === "completed") result = result.filter((s) => s.completed || s.has_output);
+    if (statusFilter === "incomplete") result = result.filter((s) => !s.completed && !s.has_output);
     return result;
   }, [sessions, modeFilter, statusFilter]);
 
-  const completedCount = sessions.filter((s) => s.completed).length;
+  const completedCount = sessions.filter((s) => s.completed || s.has_output).length;
   const totalTokens = sessions.reduce((sum, s) => sum + s.tokens_total, 0);
+
+  // Dynamic quota calculation
+  const quotaInfo = useMemo(() => {
+    if (modeFilter === "all" || !quota) return null;
+    const cost = MODE_COSTS[modeFilter] ?? 1;
+    const remaining = quota.total_remaining ?? 0;
+    const maxActions = Math.floor(remaining / cost);
+    return { maxActions, label: MODE_META[modeFilter]?.label ?? modeFilter, remaining };
+  }, [modeFilter, quota]);
+
+  const handleView = (session: Session) => {
+    setSelectedSession(session);
+    setDetailOpen(true);
+  };
 
   return (
     <AppShell
@@ -156,14 +200,14 @@ export default function HistoryPage() {
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="px-2 py-1 rounded-full bg-muted font-medium">{sessions.length} sessões</span>
-            <span className="px-2 py-1 rounded-full bg-muted font-medium">{completedCount} concluídas</span>
+            <span className="px-2 py-1 rounded-full bg-muted font-medium">{completedCount} finalizadas</span>
             <span className="px-2 py-1 rounded-full bg-muted font-medium">{totalTokens.toLocaleString("pt-BR")} tokens</span>
           </div>
         </div>
       </section>
 
       {/* Filters */}
-      <section className="mb-6 flex items-center gap-2 flex-wrap">
+      <section className="mb-4 flex items-center gap-2 flex-wrap">
         {(["all", "prompt", "saas", "misto", "build"] as const).map((m) => (
           <button
             key={m}
@@ -186,10 +230,27 @@ export default function HistoryPage() {
               statusFilter === s ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 text-muted-foreground hover:bg-muted/50"
             )}
           >
-            {s === "all" ? "Todas" : s === "completed" ? "✓ Concluídas" : "⏳ Incompletas"}
+            {s === "all" ? "Todas" : s === "completed" ? "✓ Finalizadas" : "⏳ Em andamento"}
           </button>
         ))}
       </section>
+
+      {/* Dynamic Quota Badge */}
+      {quotaInfo && (
+        <section className="mb-4">
+          <div className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+            <span className="text-muted-foreground">
+              Com seu saldo atual, você pode gerar até{" "}
+              <span className="font-bold text-foreground">{quotaInfo.maxActions}</span>{" "}
+              {quotaInfo.label}{quotaInfo.maxActions !== 1 ? "s" : ""}
+            </span>
+            <span className="text-muted-foreground/60">
+              ({quotaInfo.remaining} cotas restantes)
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* List */}
       {isLoading ? (
@@ -204,12 +265,14 @@ export default function HistoryPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((session) => (
-            <SessionCard key={session.id} session={session} />
+            <SessionCard key={session.id} session={session} onView={() => handleView(session)} />
           ))}
         </div>
       )}
+
       <DashboardDock sessionCount={sessions.length} onShareOpen={() => setShareOpen(true)} />
       <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
+      <SessionDetailDialog open={detailOpen} onOpenChange={setDetailOpen} session={selectedSession} />
     </AppShell>
   );
 }
