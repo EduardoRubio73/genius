@@ -186,8 +186,9 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ["quota-balance", orgId] });
   };
 
-  const renewalDate = quota?.current_period_end
-    ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+  const renewalRaw = quota?.reset_at || quota?.current_period_end;
+  const renewalDate = renewalRaw
+    ? new Date(renewalRaw).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
     : "—";
 
   const planBadgeClasses = getPlanBadgeClasses(quota?.plan_name);
@@ -241,7 +242,7 @@ export default function Dashboard() {
                 {!resumoOpen && !isQuotaLoading && (
                   <div className="flex items-center gap-3 min-w-0 overflow-hidden">
                     <span className="text-[11px] text-muted-foreground tabular-nums font-medium whitespace-nowrap truncate">
-                      Saldo: {totalRemaining} · Renova {renewalDate}
+                      Saldo: {totalRemaining} ({creditsRemaining} plano + {bonusRemaining} bônus + {extraCredits} extras) · Renova {renewalDate}
                     </span>
                   </div>
                 )}
@@ -262,7 +263,7 @@ export default function Dashboard() {
               {/* Stats row — 5 columns */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 {[
-                  { emoji: "👑", label: "Plano", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas/mês` },
+                  { emoji: "👑", label: "Plano", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas/mês · Renova ${renewalDate}` },
                   { emoji: "⚡", label: "Cotas do Plano", value: creditsRemaining, sub: `de ${planTotal} do ciclo` },
                   { emoji: "💳", label: "Créditos Extras", value: extraCredits, sub: "compras avulsas" },
                   { emoji: "🎁", label: "Bônus", value: bonusRemaining, sub: "indicações" },
