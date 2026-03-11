@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { IoShareSocial } from "react-icons/io5"; // Ícone de 3 pontos (padrão Android/Web)
+import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import "./landing.css";
 
