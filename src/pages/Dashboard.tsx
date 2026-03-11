@@ -242,7 +242,7 @@ export default function Dashboard() {
                 {!resumoOpen && !isQuotaLoading && (
                   <div className="flex items-center gap-3 min-w-0 overflow-hidden">
                     <span className="text-[11px] text-muted-foreground tabular-nums font-medium whitespace-nowrap truncate">
-                      Saldo: {totalRemaining} · Renova {renewalDate}
+                      Saldo: {totalRemaining} ({creditsRemaining} plano + {bonusRemaining} bônus + {extraCredits} extras) · Renova {renewalDate}
                     </span>
                   </div>
                 )}
