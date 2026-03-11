@@ -135,31 +135,31 @@ export default function PromptMode() {
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
       fetchBalance();
+
+      // Auto-save
+      const finalFields = fields ?? (inputMode === "free" ? null : manualFields);
+      if (finalFields) {
+        try {
+          await supabase.from("prompt_memory").insert({
+            session_id: currentSessionId, org_id: orgId, user_id: user.id,
+            especialidade: finalFields.especialidade, persona: finalFields.persona,
+            tarefa: finalFields.tarefa, objetivo: finalFields.objetivo, contexto: finalFields.contexto,
+            destino, prompt_gerado: promptGerado || (inputMode === "free" ? "" : ""), rating: null, categoria: "prompt",
+          });
+          setIsSaved(true);
+          setMemoryRefreshKey(k => k + 1);
+          toast.success("✅ Salvo automaticamente");
+        } catch (e) {
+          console.warn("Auto-save falhou:", e);
+        }
+      }
+
       toast.success("💰 Prompt gerado! Você economizou ~R$ 8,00 vs escrever manualmente.");
     } catch (err: any) {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
   }, [orgId, user, freeText, manualFields, inputMode, destino, fetchBalance]);
-
-  const handleSave = useCallback(async () => {
-    if (!orgId || !user || !fields) return;
-    try {
-      const { error: promptErr } = await supabase.from("prompt_memory").insert({
-        session_id: sessionId, org_id: orgId, user_id: user.id,
-        especialidade: fields.especialidade, persona: fields.persona,
-        tarefa: fields.tarefa, objetivo: fields.objetivo, contexto: fields.contexto,
-        destino, prompt_gerado: promptGerado, rating: promptRating || null, categoria: "prompt",
-      });
-      if (promptErr) throw promptErr;
-
-      setIsSaved(true);
-      setMemoryRefreshKey(k => k + 1);
-      toast.success("Prompt salvo com sucesso!");
-    } catch (err: any) {
-      toast.error("Erro ao salvar: " + (err.message || ""));
-    }
-  }, [orgId, user, fields, promptGerado, promptRating, destino, sessionId]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
