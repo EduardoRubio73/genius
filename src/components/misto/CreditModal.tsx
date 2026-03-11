@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
 
 interface CreditModalProps {
   type: "no_credits" | "trial_expired" | "suspended";
@@ -28,8 +29,15 @@ export function CreditModal({ type, onClose }: CreditModalProps) {
   const { icon, title, desc } = config[type];
 
   return (
-    <div className="misto-modal-overlay" onClick={onClose}>
-      <div className="misto-modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="misto-modal-overlay fixed inset-0 z-[400] flex items-center justify-center bg-black/60" onClick={onClose}>
+      <div className="misto-modal-content relative" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 rounded-sm p-1 text-muted-foreground opacity-70 hover:opacity-100 hover:bg-muted transition-all"
+          aria-label="Fechar"
+        >
+          <X className="h-4 w-4" />
+        </button>
         <div className="misto-modal-icon">{icon}</div>
         <div className="misto-modal-title">{title}</div>
         <div className="misto-modal-desc">{desc}</div>
