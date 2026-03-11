@@ -299,7 +299,7 @@ export default function HistoryPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((session) => (
-            <SessionCard key={session.id} session={session} onView={() => handleView(session)} />
+            <SessionCard key={session.id} session={session} onView={() => handleView(session)} onDelete={() => setDeleteTarget(session)} />
           ))}
         </div>
       )}
