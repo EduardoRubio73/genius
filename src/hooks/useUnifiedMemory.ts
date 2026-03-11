@@ -29,6 +29,10 @@ export interface UnifiedMemoryEntry {
   answers?: Record<string, unknown> | null;
   // Mixed: session reference
   session_id?: string | null;
+  // Build outputs
+  outputs?: Record<string, string> | null;
+  // Mixed: spec content
+  spec_md?: string | null;
 }
 
 interface UseUnifiedMemoryOptions {
