@@ -56,7 +56,7 @@ function ContactModalContent() {
     }
     const subject = encodeURIComponent(`[${category}] Contato via Prompt Genius`);
     const body = encodeURIComponent(message || "Olá, gostaria de saber mais sobre a plataforma.");
-    window.location.href = `mailto:zragencyia@://gmail.com{subject}&body=${body}`;
+    window.location.href = `mailto:zragencyia@gmail.com?subject=${subject}&body=${body}`;
   };
 
   const handleShare = async () => {
