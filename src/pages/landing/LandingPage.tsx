@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import logo from "@/assets/logo-landing.png";
 import logoZr from "@/assets/logo-zragency.png";
 import "./landing.css";
+import { Share2 } from 'lucide-react';
+import { IoShareSocial } from "react-icons/io5"; // Estilo Ionicons
 
 interface PricingProduct {
   id: string;
@@ -178,7 +180,7 @@ function ContactModalContent() {
           <img src={logoZr} alt="ZR Agency" />
         </a>
       </div>
-      <h2>📬 Contato com a equipe zragency</h2>
+      <h2>Contato-Suporte</h2>
       <p style={{ color: "var(--mu)", fontSize: "14px", marginBottom: "8px" }}>
         Escolha o tipo de mensagem e o canal. Responderemos o mais breve possível.
       </p>
@@ -213,8 +215,13 @@ function ContactModalContent() {
 
       <div className="contact-share">
         <p>🚀 Gostou de nossa plataforma? Compartilhe!</p>
+        {/* <button className="contact-share-btn" onClick={handleShare}>📤 Compartilhar </button> */}
         <button className="contact-share-btn" onClick={handleShare}>
-          📤 Compartilhar
+          <IoShareSocial style={{ marginRight: '8px' }} /> Compartilhar
+        </button>       
+
+        <button className="contact-share-btn" onClick={handleShare}>
+          <Share2 size={18} style={{ marginRight: '8px' }} /> Compartilhar
         </button>
       </div>
     </>);
