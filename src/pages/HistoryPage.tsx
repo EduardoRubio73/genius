@@ -195,6 +195,20 @@ export default function HistoryPage() {
     setDetailOpen(true);
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("sessions").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast.error("Erro ao excluir sessão. Tente novamente.");
+    } else {
+      setSessions((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+      toast.success("Sessão excluída com sucesso.");
+    }
+    setIsDeleting(false);
+    setDeleteTarget(null);
+  };
+
   return (
     <AppShell
       userName={profile?.full_name}
