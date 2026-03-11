@@ -166,6 +166,7 @@ export function useUnifiedMemory({
             project_name: e.project_name,
             answers: e.answers as Record<string, unknown> | null,
             session_id: e.session_id,
+            outputs,
           };
         });
 
