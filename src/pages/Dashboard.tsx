@@ -263,7 +263,7 @@ export default function Dashboard() {
               {/* Stats row — 5 columns */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 {[
-                  { emoji: "👑", label: "Plano", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas/mês` },
+                  { emoji: "👑", label: "Plano", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas/mês · Renova ${renewalDate}` },
                   { emoji: "⚡", label: "Cotas do Plano", value: creditsRemaining, sub: `de ${planTotal} do ciclo` },
                   { emoji: "💳", label: "Créditos Extras", value: extraCredits, sub: "compras avulsas" },
                   { emoji: "🎁", label: "Bônus", value: bonusRemaining, sub: "indicações" },
