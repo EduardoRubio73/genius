@@ -106,7 +106,7 @@ function ContactModalContent() {
       <div className="contact-share">
         <p>🚀 Gostou de nossa plataforma? Compartilhe!</p>
         <button className="contact-share-btn" onClick={handleShare}>
-          <IoShareSocial size={18} /> Compartilhar
+          <Share2 size={18} /> Compartilhar
         </button>
       </div>
     </div>
