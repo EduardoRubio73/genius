@@ -786,8 +786,6 @@ export default function BuildMode() {
   const [sessionId, setSessionId] = useState<string|null>(null);
   const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
 
-  useEffect(() => { fetchBalance(); }, [fetchBalance]);
-
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
     try {
