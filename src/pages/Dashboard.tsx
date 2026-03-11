@@ -117,8 +117,8 @@ function ModeActionCard({
       onClick={() => !disabled && navigate(href)}
       disabled={disabled}
       className={cn(
-        "group relative flex flex-col items-center gap-1.5 rounded-2xl border-[1.5px] p-5 text-center transition-all duration-200",
-        "hover:-translate-y-[3px] hover:shadow-lg",
+        "group relative flex flex-col items-center gap-2 rounded-2xl border-[1.5px] p-5 sm:p-6 text-center transition-all duration-200",
+        "hover:-translate-y-[3px] hover:shadow-lg h-full",
         disabled
           ? "opacity-40 cursor-not-allowed grayscale border-border/40 bg-muted/30"
           : colors.card
