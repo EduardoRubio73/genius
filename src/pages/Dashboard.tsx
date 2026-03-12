@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Star, TrendingUp, ChevronDown, RefreshCw, CreditCard } from "lucide-react";
 import { SubscriptionAlert } from "@/components/SubscriptionAlert";
+import { useOrgSubscription } from "@/hooks/useOrgSubscription";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
