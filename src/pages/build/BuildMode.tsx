@@ -979,7 +979,7 @@ export default function BuildMode() {
               <div className="misto-result-panel">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <span className="misto-pfb-label" style={{ color: "hsl(var(--primary))" }}>{DOC_LABELS[activeDoc]}</span>
-                  <button className="misto-copy-btn misto-copy-btn-v" onClick={() => copyText(outputs[activeDoc] || "")}>Copiar</button>
+                  <CopyButton text={outputs[activeDoc] || ""} className="misto-copy-btn misto-copy-btn-v" />
                 </div>
                 <pre style={{
                   whiteSpace: "pre-wrap", wordBreak: "break-word",
