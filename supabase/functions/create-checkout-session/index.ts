@@ -112,6 +112,31 @@ Deno.serve(async (req) => {
       await admin.from("organizations").update({ stripe_customer_id: stripeCustomerId }).eq("id", orgRow.id);
     }
 
+    // Cancel existing active Stripe subscriptions for this customer to prevent duplicates
+    try {
+      const existingSubs = await stripe.subscriptions.list({
+        customer: stripeCustomerId,
+        status: "active",
+        limit: 10,
+      });
+      for (const sub of existingSubs.data) {
+        console.log("Canceling old Stripe subscription:", sub.id, "for customer:", stripeCustomerId);
+        await stripe.subscriptions.cancel(sub.id, { prorate: true });
+      }
+      // Also cancel trialing subscriptions
+      const trialingSubs = await stripe.subscriptions.list({
+        customer: stripeCustomerId,
+        status: "trialing",
+        limit: 10,
+      });
+      for (const sub of trialingSubs.data) {
+        console.log("Canceling old trialing subscription:", sub.id);
+        await stripe.subscriptions.cancel(sub.id);
+      }
+    } catch (cancelErr) {
+      console.warn("Non-fatal: failed to cancel old subscriptions:", cancelErr);
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,

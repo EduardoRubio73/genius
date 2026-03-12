@@ -246,6 +246,49 @@ async function upsertSubscriptionFromStripe(
   }
 }
 
+/** Resolve orgId from a Stripe subscription via metadata or stripe_customer_id lookup */
+async function resolveOrgId(stripeSubscription: Stripe.Subscription): Promise<string | null> {
+  const orgId = stripeSubscription.metadata?.org_id;
+  if (orgId) return orgId;
+
+  const customerId = stripeSubscription.customer as string;
+  const { data: org } = await admin
+    .from("organizations")
+    .select("id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+
+  return org?.id ?? null;
+}
+
+/** Upsert a Stripe invoice into billing_invoices */
+async function upsertInvoice(invoice: Stripe.Invoice, orgId: string): Promise<void> {
+  const invoiceData = {
+    id: invoice.id!,
+    org_id: orgId,
+    subscription_id: (invoice.subscription as string) ?? null,
+    amount_due: invoice.amount_due ?? 0,
+    amount_paid: invoice.amount_paid ?? 0,
+    currency: invoice.currency ?? "brl",
+    status: invoice.status ?? "unknown",
+    paid_at: invoice.status === "paid" ? new Date().toISOString() : null,
+    period_start: safeTimestamp(invoice.period_start),
+    period_end: safeTimestamp(invoice.period_end),
+    hosted_invoice_url: invoice.hosted_invoice_url ?? null,
+    invoice_pdf: invoice.invoice_pdf ?? null,
+  };
+
+  const { error } = await admin
+    .from("billing_invoices")
+    .upsert(invoiceData, { onConflict: "id" });
+
+  if (error) {
+    console.error("Failed to upsert invoice:", error);
+  } else {
+    console.log("Invoice upserted:", invoice.id, "for org:", orgId);
+  }
+}
+
 async function handleStripeWebhook(req: Request): Promise<Response> {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -309,23 +352,67 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
       event.type === "customer.subscription.updated"
     ) {
       const stripeSubscription = event.data.object as Stripe.Subscription;
-      const orgId = stripeSubscription.metadata?.org_id;
+      const orgId = await resolveOrgId(stripeSubscription);
 
       if (orgId) {
+        // Check if period changed (renewal) — reset credits
+        if (event.type === "customer.subscription.updated") {
+          const previousAttrs = (event.data as any).previous_attributes;
+          if (previousAttrs?.current_period_start !== undefined) {
+            console.log("Period renewed for org:", orgId, "— resetting plan_credits_used");
+            await admin
+              .from("organizations")
+              .update({
+                plan_credits_used: 0,
+                plan_credits_reset_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", orgId);
+          }
+        }
+
         await upsertSubscriptionFromStripe(stripeSubscription, orgId);
       } else {
-        const customerId = stripeSubscription.customer as string;
-        const { data: org } = await admin
-          .from("organizations")
-          .select("id")
-          .eq("stripe_customer_id", customerId)
-          .maybeSingle();
+        console.warn("Could not find org for subscription:", stripeSubscription.id);
+      }
+    }
 
-        if (org) {
-          await upsertSubscriptionFromStripe(stripeSubscription, org.id);
-        } else {
-          console.warn("Could not find org for subscription:", stripeSubscription.id);
-        }
+    // Handle customer.subscription.deleted
+    if (event.type === "customer.subscription.deleted") {
+      const stripeSubscription = event.data.object as Stripe.Subscription;
+      const orgId = await resolveOrgId(stripeSubscription);
+
+      if (orgId) {
+        console.log("Subscription deleted for org:", orgId, "sub:", stripeSubscription.id);
+
+        // Update local subscription record
+        const now = new Date().toISOString();
+        await admin
+          .from("billing_subscriptions")
+          .update({
+            status: "canceled",
+            canceled_at: safeTimestamp(stripeSubscription.canceled_at) ?? now,
+            ended_at: safeTimestamp(stripeSubscription.ended_at) ?? now,
+            updated_at: now,
+          })
+          .eq("id", stripeSubscription.id);
+
+        // Downgrade org to free
+        await admin
+          .from("organizations")
+          .update({
+            plan_tier: "free",
+            plan_credits_total: 0,
+            account_status: "churned",
+            monthly_token_limit: 10000,
+            max_members: 1,
+            updated_at: now,
+          })
+          .eq("id", orgId);
+
+        console.log("Org downgraded to free:", orgId);
+      } else {
+        console.warn("Could not find org for deleted subscription:", stripeSubscription.id);
       }
     }
 
@@ -333,18 +420,38 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
     if (event.type === "invoice.payment_succeeded") {
       const invoice = event.data.object as Stripe.Invoice;
       const subId = invoice.subscription as string | null;
+
+      // Upsert invoice record
       if (subId) {
         const { data: sub } = await admin
           .from("billing_subscriptions")
           .select("org_id")
           .eq("id", subId)
           .maybeSingle();
+
         if (sub?.org_id) {
+          // Reset credits
           await admin
             .from("organizations")
             .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
             .eq("id", sub.org_id);
           console.log("Credits reset via invoice for org:", sub.org_id);
+
+          // Upsert invoice
+          await upsertInvoice(invoice, sub.org_id);
+        }
+      } else {
+        // Try to find org via customer_id for non-subscription invoices
+        const customerId = invoice.customer as string;
+        if (customerId) {
+          const { data: org } = await admin
+            .from("organizations")
+            .select("id")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+          if (org) {
+            await upsertInvoice(invoice, org.id);
+          }
         }
       }
     }
