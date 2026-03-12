@@ -875,6 +875,7 @@ export default function BuildMode() {
 
       toast.success("🚀 Projeto BUILD gerado com sucesso!");
     } catch (err: any) {
+      hideLoading();
       toast.error(err.message || "Erro ao gerar projeto.");
       setStep(10);
     }
