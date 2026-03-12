@@ -604,8 +604,7 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
   return (
     <div className="space-y-5">
-      {/* ── Subscription Alert ── */}
-      <SubscriptionAlert orgId={orgId} />
+      {/* Subscription Alert removed — rendered globally in AppShell */}
       <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
         <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md">
           <div className="flex items-center justify-between gap-3">
