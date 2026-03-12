@@ -220,10 +220,10 @@ export default function Dashboard() {
           ) : (
             <div className="flex items-start justify-between flex-wrap gap-4">
               <div>
-                <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+                <h1 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
                   {getGreeting()}, {firstName || "criador"} ✨
                 </h1>
-                <p className="mt-1 text-muted-foreground">O que vamos construir hoje?</p>
+                <p className="mt-2 text-lg text-muted-foreground">O que vamos construir hoje?</p>
               </div>
               <button
                 onClick={() => navigate("/profile?tab=billing")}
