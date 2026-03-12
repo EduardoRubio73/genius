@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.sync-stripe-subscription]
 verify_jwt = false
+
+[functions.create-billing-portal]
+verify_jwt = false
