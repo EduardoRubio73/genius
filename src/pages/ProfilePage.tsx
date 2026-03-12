@@ -10,7 +10,7 @@ import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { supabase } from "@/integrations/supabase/client";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
-import { SubscriptionAlert, getSubscriptionStatusInfo, isSubscriptionExpired, isRenewalSoon, getDaysUntilRenewal } from "@/components/SubscriptionAlert";
+import { SubscriptionAlert, getSubscriptionStatusInfo, isSubscriptionExpired, isRenewalSoon, getDaysUntilRenewal, deriveSubscriptionStatus } from "@/components/SubscriptionAlert";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
