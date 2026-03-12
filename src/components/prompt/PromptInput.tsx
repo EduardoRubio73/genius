@@ -125,12 +125,12 @@ export function PromptInput({
             className="misto-textarea"
             placeholder="Descreva o que você precisa em texto livre. A IA vai extrair os campos automaticamente e gerar o prompt otimizado..."
             value={freeText}
-            onChange={(e) => onFreeTextChange(e.target.value.slice(0, 600))}
+            onChange={(e) => onFreeTextChange(e.target.value.slice(0, 1200))}
             disabled={isGenerating}
             style={{ minHeight: 220 }}
           />
           <div className={`misto-char-count ${freeLen < 30 ? "warning" : ""}`}>
-            {freeLen} / 600 {freeLen < 30 && "(mín. 30)"}
+            {freeLen} / 1200 {freeLen < 30 && "(mín. 30)"}
           </div>
         </div>
       )}
