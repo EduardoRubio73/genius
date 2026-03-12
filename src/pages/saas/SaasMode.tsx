@@ -98,6 +98,8 @@ export default function SaasMode() {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
 
+  const { showLoading, hideLoading } = useLoading();
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -108,6 +110,7 @@ export default function SaasMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
+    showLoading("Gerando Spec SaaS...");
 
     try {
       setStep("generating");
