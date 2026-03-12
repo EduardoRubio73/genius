@@ -57,6 +57,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <LoadingProvider>
       <TooltipProvider delayDuration={300} skipDelayDuration={100}>
         <Toaster />
         <Sonner />
