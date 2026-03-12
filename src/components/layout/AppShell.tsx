@@ -35,6 +35,8 @@ export function AppShell({
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: profile } = useProfile(user?.id);
+  const orgId = profile?.personal_org_id ?? undefined;
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
