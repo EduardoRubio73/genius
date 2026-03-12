@@ -259,9 +259,14 @@ export default function PromptMode() {
                     </div>
                   ))}
                 </div>
-                <CopyButton text={promptGerado} />
-                </div>
+                <div className="misto-prompt-final-box">
+                  <div className="misto-pfb-header">
+                    <div className="misto-pfb-label">Prompt Final</div>
+                    <CopyButton text={promptGerado} />
+                  </div>
                   <div className="misto-prompt-text">{promptGerado}</div>
+                </div>
+                <div style={{ marginTop: 16 }}>
                   <div className="misto-rating-row">
                     <span className="misto-rating-label">Avaliar:</span>
                     <div className="misto-stars">
