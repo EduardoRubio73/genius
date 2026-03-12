@@ -571,7 +571,8 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   const subExpired = isSubscriptionExpired(subscription);
   const renewalSoon = isRenewalSoon(subscription);
   const daysLeft = getDaysUntilRenewal(subscription);
-  const statusInfo = getSubscriptionStatusInfo(subscription?.status);
+  const derivedStatus = deriveSubscriptionStatus(subscription, quota);
+  const statusInfo = getSubscriptionStatusInfo(derivedStatus);
 
   const planBadgeClasses = getPlanBadgeClasses(quota?.plan_name);
 
