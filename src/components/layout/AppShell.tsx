@@ -144,6 +144,11 @@ export function AppShell({
         </div>
       </header>
 
+      {/* ── Global Subscription Alert ── */}
+      <div className="mx-auto max-w-6xl px-4 pt-3">
+        <SubscriptionAlert orgId={orgId} showToast compact />
+      </div>
+
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       <main className="relative z-10 mx-auto max-w-6xl px-4 py-8">
         {children}
