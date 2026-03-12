@@ -310,8 +310,8 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="flex justify-between mb-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bônus + Extras</span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">{bonusTotal} disponíveis</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bônus + Extras</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{bonusTotal} disponíveis</span>
                   </div>
                   <div className="h-[5px] w-full rounded-full bg-border overflow-hidden">
                     <div
