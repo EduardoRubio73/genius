@@ -227,8 +227,8 @@ export default function Dashboard() {
               </div>
               <button
                 onClick={() => navigate("/profile?tab=billing")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer hover:scale-105 transition-transform",
+                 className={cn(
+                   "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-sm font-bold uppercase tracking-wider shadow-sm cursor-pointer hover:scale-105 transition-transform",
                   planBadgeClasses
                 )}
                 title="Ver planos disponíveis"
