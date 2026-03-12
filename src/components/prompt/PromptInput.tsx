@@ -83,7 +83,7 @@ export function PromptInput({
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
   const canGenerate = inputMode === "free"
-    ? freeLen >= 30 && freeLen <= 600 && !isGenerating
+    ? freeLen >= 30 && freeLen <= 1200 && !isGenerating
     : manualFilled >= 3 && !isGenerating;
 
   const [selectedPlatformId, setSelectedPlatformId] = useState("lovable");
