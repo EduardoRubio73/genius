@@ -245,7 +245,7 @@ export default function Dashboard() {
           <div className="rounded-[20px] border bg-card p-5 shadow-sm mb-4">
             <div className="flex items-center justify-between gap-3">
               <CollapsibleTrigger className="flex items-center justify-between flex-1 cursor-pointer gap-3">
-                <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.1em]">
+                <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
                   Resumo da Conta
                 </p>
                 {!resumoOpen && !isQuotaLoading && (
