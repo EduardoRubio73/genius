@@ -4,9 +4,11 @@ import { useTheme } from "@/hooks/useTheme";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SubscriptionAlert } from "@/components/SubscriptionAlert";
 import {
   DropdownMenu,
   DropdownMenuContent,
