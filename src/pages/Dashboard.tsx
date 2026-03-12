@@ -119,7 +119,7 @@ function ModeActionCard({
       onClick={() => !disabled && navigate(href)}
       disabled={disabled}
       className={cn(
-        "group relative flex flex-col items-center gap-2 rounded-2xl border-[1.5px] p-5 sm:p-6 text-center transition-all duration-200",
+        "group relative flex flex-col items-center gap-2 rounded-2xl border-[1.5px] p-6 sm:p-7 text-center transition-all duration-200",
         "hover:-translate-y-[3px] hover:shadow-lg h-full",
         disabled
           ? "opacity-40 cursor-not-allowed grayscale border-border/40 bg-muted/30"
@@ -133,18 +133,18 @@ function ModeActionCard({
         <Icon className="h-7 w-7 sm:h-8 sm:w-8" />
       </div>
 
-      <h3 className="font-heading text-sm sm:text-base font-bold tracking-tight">{title}</h3>
-      <p className="text-xs sm:text-[11px] text-muted-foreground leading-relaxed">{description}</p>
+      <h3 className="font-heading text-lg sm:text-xl font-semibold tracking-tight">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{description}</p>
 
       <span className={cn(
-        "rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold tabular-nums mt-1",
+        "rounded-full px-3 py-1 text-xs sm:text-sm font-semibold tabular-nums mt-2",
         disabled ? "bg-muted text-muted-foreground" : colors.badge
       )}>
         {cost} {cost === 1 ? "cota" : "cotas"} · até {maxActions}
       </span>
 
       <span className={cn(
-        "mt-auto inline-flex items-center gap-1 text-xs sm:text-[13px] font-semibold transition-colors pt-2",
+        "mt-auto inline-flex items-center gap-1 text-sm font-semibold transition-colors pt-3",
         disabled ? "text-muted-foreground" : colors.text
       )}>
         {disabled ? "Indisponível" : "Iniciar →"}
@@ -220,15 +220,15 @@ export default function Dashboard() {
           ) : (
             <div className="flex items-start justify-between flex-wrap gap-4">
               <div>
-                <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+                <h1 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
                   {getGreeting()}, {firstName || "criador"} ✨
                 </h1>
-                <p className="mt-1 text-muted-foreground">O que vamos construir hoje?</p>
+                <p className="mt-2 text-lg text-muted-foreground">O que vamos construir hoje?</p>
               </div>
               <button
                 onClick={() => navigate("/profile?tab=billing")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer hover:scale-105 transition-transform",
+                 className={cn(
+                   "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-sm font-bold uppercase tracking-wider shadow-sm cursor-pointer hover:scale-105 transition-transform",
                   planBadgeClasses
                 )}
                 title="Ver planos disponíveis"
@@ -245,13 +245,13 @@ export default function Dashboard() {
           <div className="rounded-[20px] border bg-card p-5 shadow-sm mb-4">
             <div className="flex items-center justify-between gap-3">
               <CollapsibleTrigger className="flex items-center justify-between flex-1 cursor-pointer gap-3">
-                <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.1em]">
+                <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
                   Resumo da Conta
                 </p>
                 {!resumoOpen && !isQuotaLoading && (
                   <div className="flex items-center gap-3 min-w-0 overflow-hidden">
                     {subExpired && <span className="text-amber-500 mr-1">⚠️</span>}
-                    <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
+                    <span className="text-sm text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
                       Saldo: {totalRemaining} ({creditsRemaining} plano + {bonusRemaining} bônus + {extraCredits} extras) · Renova {renewalDate}
                     </span>
                   </div>
@@ -281,13 +281,13 @@ export default function Dashboard() {
                 ].map((item) => (
                   <div key={item.label} className="rounded-xl border bg-muted/50 p-2.5">
                     <div className="text-sm mb-1">{item.emoji}</div>
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
                     {isQuotaLoading ? (
                       <Skeleton className="h-5 w-10 mt-0.5" />
                     ) : (
                       <>
-                        <p className={cn("font-heading text-[17px] font-extrabold", item.highlight ? "text-primary" : "text-foreground")}>{item.value}</p>
-                        <p className="text-[9px] text-muted-foreground">{item.sub}</p>
+                        <p className={cn("font-heading text-lg font-extrabold", item.highlight ? "text-primary" : "text-foreground")}>{item.value}</p>
+                        <p className="text-[10px] text-muted-foreground">{item.sub}</p>
                       </>
                     )}
                   </div>
@@ -298,8 +298,8 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between mb-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Cotas do Plano</span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">{planUsed} / {planTotal} usadas · {creditsRemaining} restantes</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cotas do Plano</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{planUsed} / {planTotal} usadas · {creditsRemaining} restantes</span>
                   </div>
                   <div className="h-[5px] w-full rounded-full bg-border overflow-hidden">
                     <div
@@ -310,8 +310,8 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <div className="flex justify-between mb-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Bônus + Extras</span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">{bonusTotal} disponíveis</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bônus + Extras</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{bonusTotal} disponíveis</span>
                   </div>
                   <div className="h-[5px] w-full rounded-full bg-border overflow-hidden">
                     <div
@@ -331,8 +331,8 @@ export default function Dashboard() {
                   { label: "Média Rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—") },
                 ].map((s) => (
                   <div key={s.label} className="text-center">
-                    <p className="font-heading text-xl font-extrabold text-foreground">{s.value}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
+                    <p className="font-heading text-2xl font-extrabold text-foreground">{s.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -363,7 +363,7 @@ export default function Dashboard() {
         <Collapsible open={modosOpen} onOpenChange={setModosOpen}>
           <div className="rounded-[20px] border bg-card p-5 shadow-sm mb-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer">
-              <p className="text-[11px] font-bold text-pink-600 dark:text-pink-400 uppercase tracking-[0.1em]">
+              <p className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-widest">
                 Modos Disponíveis
               </p>
               <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform duration-200", modosOpen && "rotate-180")} />
