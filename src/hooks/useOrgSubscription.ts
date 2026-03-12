@@ -14,6 +14,7 @@ export interface OrgSubscriptionData {
   trial_end: string | null;
   cancel_at: string | null;
   canceled_at: string | null;
+  account_status?: string | null;
 }
 
 export function useOrgSubscription(orgId: string | undefined) {

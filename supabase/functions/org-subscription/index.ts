@@ -42,17 +42,30 @@ Deno.serve(async (req) => {
     if (subErr) throw subErr;
 
     if (!sub) {
+      // No billing subscription found — enrich with org data
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("plan_tier, plan_credits_total, account_status, trial_ends_at, plan_credits_reset_at")
+        .eq("id", org_id)
+        .single();
+
+      const orgTier = org?.plan_tier ?? "free";
+      const isFreeTier = orgTier === "free";
+
       return new Response(JSON.stringify({
-        status: "none",
-        plan_name: null,
-        plan_tier: "free",
+        status: isFreeTier ? "none" : "active",
+        plan_name: isFreeTier ? null : orgTier.charAt(0).toUpperCase() + orgTier.slice(1),
+        plan_tier: orgTier,
         plan_value: 0,
         currency: "brl",
         interval: null,
         current_period_start: null,
-        current_period_end: null,
+        current_period_end: org?.plan_credits_reset_at ?? null,
         trial_start: null,
-        trial_end: null,
+        trial_end: org?.trial_ends_at ?? null,
+        cancel_at: null,
+        canceled_at: null,
+        account_status: org?.account_status ?? "active",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
