@@ -560,11 +560,18 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
   const contractDate = subscription?.current_period_start
     ? new Date(subscription.current_period_start).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
-    : "—";
+    : renewalRaw
+      ? new Date(new Date(renewalRaw).getTime() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+      : "—";
 
   const trialEndDate = subscription?.trial_end
     ? new Date(subscription.trial_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
     : null;
+
+  const subExpired = isSubscriptionExpired(subscription);
+  const renewalSoon = isRenewalSoon(subscription);
+  const daysLeft = getDaysUntilRenewal(subscription);
+  const statusInfo = getSubscriptionStatusInfo(subscription?.status);
 
   const planBadgeClasses = getPlanBadgeClasses(quota?.plan_name);
 
