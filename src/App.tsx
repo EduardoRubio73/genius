@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LoadingProvider } from "@/contexts/LoadingContext";
 
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SuperAdminGuard } from "@/components/guards/SuperAdminGuard";
