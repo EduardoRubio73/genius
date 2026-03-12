@@ -1,8 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
 
+export type SubscriptionStatus =
+  | "active"
+  | "trialing"
+  | "past_due"
+  | "canceled"
+  | "incomplete"
+  | "incomplete_expired"
+  | "unpaid"
+  | "paused"
+  | "none";
+
 export interface OrgSubscriptionData {
-  status: string;
+  status: SubscriptionStatus;
   plan_name: string | null;
   plan_tier: string;
   plan_value: number;
