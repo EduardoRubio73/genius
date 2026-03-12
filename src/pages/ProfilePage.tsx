@@ -788,7 +788,7 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
             <div className="flex items-center gap-4 flex-wrap">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
-                  Status: <span className="font-semibold text-foreground capitalize">{subscription?.status ?? "Nenhuma"}</span>
+                  Status: <span className={cn("font-semibold", statusInfo.color)}>{statusInfo.label}</span>
                 </p>
                 {subscription?.plan_name && (
                   <p className="text-sm text-muted-foreground">
