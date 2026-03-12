@@ -298,8 +298,8 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between mb-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Cotas do Plano</span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">{planUsed} / {planTotal} usadas · {creditsRemaining} restantes</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cotas do Plano</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{planUsed} / {planTotal} usadas · {creditsRemaining} restantes</span>
                   </div>
                   <div className="h-[5px] w-full rounded-full bg-border overflow-hidden">
                     <div
