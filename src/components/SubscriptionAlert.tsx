@@ -14,6 +14,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   past_due: { label: "Pendente", color: "text-yellow-600 dark:text-yellow-400" },
   canceled: { label: "Cancelado", color: "text-red-600 dark:text-red-400" },
   incomplete_expired: { label: "Expirado", color: "text-red-600 dark:text-red-400" },
+  expired: { label: "Vencida", color: "text-red-600 dark:text-red-400" },
   none: { label: "Inativo", color: "text-muted-foreground" },
 };
 
@@ -21,10 +22,43 @@ export function getSubscriptionStatusInfo(status: string | undefined | null) {
   return STATUS_MAP[status ?? "none"] ?? STATUS_MAP.none;
 }
 
+/**
+ * Derives the effective subscription status considering:
+ * - Billing subscription status
+ * - Whether current_period_end has passed
+ * - Org plan_tier fallback when no billing record exists
+ */
+export function deriveSubscriptionStatus(
+  subscription: { status: string; current_period_end?: string | null; plan_tier?: string } | undefined | null,
+  quota?: { plan_name?: string | null; account_status?: string | null } | null,
+): string {
+  if (!subscription) return "none";
+
+  const status = subscription.status;
+
+  // If status is "none" but org has a non-free plan, treat as active
+  if (status === "none") {
+    const tier = subscription.plan_tier ?? "free";
+    if (tier !== "free") return "active";
+    return "none";
+  }
+
+  // If active but period has ended, it's expired
+  if (status === "active" && subscription.current_period_end) {
+    if (new Date(subscription.current_period_end) < new Date()) {
+      return "expired";
+    }
+  }
+
+  return status;
+}
+
 export function isSubscriptionExpired(subscription: { status: string; current_period_end?: string | null } | undefined | null): boolean {
   if (!subscription) return false;
   if (subscription.status === "canceled" || subscription.status === "incomplete_expired") return true;
   if (subscription.status === "past_due") return true;
+  // "none" is absence of billing record, not expiration
+  if (subscription.status === "none") return false;
   if (subscription.current_period_end) {
     return new Date(subscription.current_period_end) < new Date();
   }
@@ -36,7 +70,7 @@ export function isRenewalSoon(subscription: { current_period_end?: string | null
   const end = new Date(subscription.current_period_end);
   const now = new Date();
   const daysLeft = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-  return daysLeft <= 7 && daysLeft >= 0;
+  return daysLeft <= 5 && daysLeft >= 0;
 }
 
 export function getDaysUntilRenewal(subscription: { current_period_end?: string | null } | undefined | null): number | null {

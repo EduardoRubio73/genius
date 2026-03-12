@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Star, TrendingUp, ChevronDown, RefreshCw, CreditCard } from "lucide-react";
 import { SubscriptionAlert } from "@/components/SubscriptionAlert";
+import { useOrgSubscription } from "@/hooks/useOrgSubscription";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -160,6 +161,7 @@ export default function Dashboard() {
   const orgId = profile?.personal_org_id ?? undefined;
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
   const { data: quota, isLoading: quotaLoading, isFetching: quotaFetching } = useQuotaBalance(orgId);
+  const { data: subscription } = useOrgSubscription(orgId);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [resumoOpen, setResumoOpen] = useState(false);
@@ -176,7 +178,12 @@ export default function Dashboard() {
   const bonusRemaining = quota?.bonus_remaining ?? 0;
   const extraCredits = quota?.extra_credits ?? 0;
   const totalRemaining = creditsRemaining + bonusRemaining + extraCredits;
-  const noQuota = !isQuotaLoading && quota != null && totalRemaining <= 0;
+
+  // Access rule: user can use if they have balance OR an active subscription
+  const subscriptionActive = subscription?.status === "active" || subscription?.status === "trialing";
+  const canUse = totalRemaining > 0 || subscriptionActive;
+  const noQuota = !isQuotaLoading && quota != null && !canUse;
+
   const percentUsed = quota?.percent_used ?? 0;
 
   const planUsed = quota?.plan_used ?? 0;

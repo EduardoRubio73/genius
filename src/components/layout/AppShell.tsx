@@ -4,9 +4,11 @@ import { useTheme } from "@/hooks/useTheme";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SubscriptionAlert } from "@/components/SubscriptionAlert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,8 @@ export function AppShell({
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: profile } = useProfile(user?.id);
+  const orgId = profile?.personal_org_id ?? undefined;
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
@@ -139,6 +143,11 @@ export function AppShell({
           </div>
         </div>
       </header>
+
+      {/* ── Global Subscription Alert ── */}
+      <div className="mx-auto max-w-6xl px-4 pt-3">
+        <SubscriptionAlert orgId={orgId} showToast compact />
+      </div>
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       <main className="relative z-10 mx-auto max-w-6xl px-4 py-8">
