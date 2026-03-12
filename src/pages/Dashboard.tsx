@@ -331,8 +331,8 @@ export default function Dashboard() {
                   { label: "Média Rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—") },
                 ].map((s) => (
                   <div key={s.label} className="text-center">
-                    <p className="font-heading text-xl font-extrabold text-foreground">{s.value}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
+                    <p className="font-heading text-2xl font-extrabold text-foreground">{s.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
                   </div>
                 ))}
               </div>
