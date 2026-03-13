@@ -33,6 +33,8 @@ const stepsDef = [
 
 export default function PromptMode() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isSkillMode = searchParams.get("mode") === "skill";
   const { user } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const { theme, toggleTheme } = useTheme();
@@ -43,7 +45,7 @@ export default function PromptMode() {
   const [manualFields, setManualFields] = useState<MistoFields>({
     especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "",
   });
-  const [inputMode, setInputMode] = useState<"free" | "manual" | "skills">("free");
+  const [inputMode, setInputMode] = useState<"free" | "manual" | "skills">(isSkillMode ? "skills" : "free");
   const [destino, setDestino] = useState<Enums<"destination_platform">>("lovable");
   const [fields, setFields] = useState<MistoFields | null>(null);
   const [promptGerado, setPromptGerado] = useState("");
