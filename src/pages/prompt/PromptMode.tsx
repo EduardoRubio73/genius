@@ -285,7 +285,7 @@ export default function PromptMode() {
           <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
           <div className="misto-mode-badge" style={{ background: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary) / 0.25)" }}>
             <span className="misto-badge-pulse" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 8px hsl(var(--primary))" }} />
-            <span style={{ color: "hsl(var(--primary))" }}>✨ Modo Prompt</span>
+            <span style={{ color: "hsl(var(--primary))" }}>{isSkillMode ? "⚡ Modo Skill" : "✨ Modo Prompt"}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
