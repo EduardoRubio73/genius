@@ -86,7 +86,8 @@ export default function PromptMode() {
   const { showLoading, hideLoading } = useLoading();
 
   const handleGenerate = useCallback(async (forceAI?: boolean) => {
-    if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
+    if (authLoading) { toast.info("Aguarde, carregando sessão..."); return; }
+    if (!orgId || !user) { toast.error("Usuário não autenticado. Faça login novamente."); return; }
 
     const balance = await fetchBalance();
     if (!balance) { toast.error("Erro ao verificar cotas"); return; }
