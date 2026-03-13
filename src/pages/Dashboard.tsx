@@ -435,17 +435,28 @@ export default function Dashboard() {
             </CollapsibleTrigger>
 
             <CollapsibleContent className="mt-4">
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 auto-rows-fr">
-                {MODES.map((mode, i) => (
-                  <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
-                    <ModeActionCard
-                      {...mode}
-                      creditsRemaining={totalRemaining}
-                      disabled={noQuota}
-                    />
-                  </div>
-                ))}
-              </div>
+              <TooltipProvider delayDuration={300}>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 auto-rows-fr">
+                  {MODES.map((mode, i) => (
+                    <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="h-full">
+                            <ModeActionCard
+                              {...mode}
+                              creditsRemaining={totalRemaining}
+                              disabled={noQuota}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line text-xs leading-relaxed">
+                          {mode.tooltip}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  ))}
+                </div>
+              </TooltipProvider>
             </CollapsibleContent>
           </div>
         </Collapsible>
