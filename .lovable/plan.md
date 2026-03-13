@@ -1,67 +1,45 @@
 
 
-# Remover SkillIntentModal + Adicionar "Gerar Mini App"
+## Fix: Admin Credits Not Saving
 
-## Parte 1 — Remover SkillIntentModal
+### Root Causes
 
-O modal de intenção é redundante agora que Prompt e Skill têm entradas separadas.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-### `src/pages/prompt/PromptMode.tsx`
-- Remover import de `SkillIntentModal`
-- Remover estado `intentModalOpen`
-- Remover `handleIntentSelect` callback
-- Simplificar `handleGenerateClick`: chamar `handleGenerate()` diretamente para todos os modos
-- Simplificar `handleGenerate`: remover parâmetro `intent` — no modo skills, sempre tentar cache primeiro e depois IA
-- Remover `handleForceAI` (manter só como botão inline que chama `handleGenerate` com `forceAI=true`)
-- Remover `<SkillIntentModal>` do JSX (linhas 401-407)
+### Solution
 
-### `src/components/skills/SkillIntentModal.tsx`
-- Deletar arquivo
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-## Parte 2 — Botão "Gerar Mini App" na tela de resultado
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-### Nova Edge Function: `supabase/functions/generate-mini-app/index.ts`
-- Reutiliza o mesmo padrão de auth + `callLLM` via Lovable Gateway
-- Recebe `{ prompt_memory_id, especialidade, tarefa, objetivo, contexto, prompt_gerado }`
-- System prompt instruindo a gerar HTML completo, interativo, offline, max 200 linhas
-- **Não consome crédito** (sem `consume_credit` RPC)
-- Salva `mini_app_html` e `mini_app_generated_at` na tabela `prompt_memory`
-- Retorna o HTML gerado
+### Files to Edit
 
-### `src/pages/prompt/PromptMode.tsx` — Novos estados e handler
-- Adicionar estados: `miniAppHtml`, `generatingMiniApp`, `showMiniApp`, `promptMemoryId`
-- Guardar o `id` do registro inserido em `prompt_memory` (já existe o insert, só capturar o retorno)
-- Criar `handleGenerateMiniApp`: chama edge function `generate-mini-app`, atualiza estado
-- Na tela de resultados, abaixo do prompt final, adicionar:
-  - Botão "Gerar Mini App" (roxo) quando `!miniAppHtml`
-  - Botão "Abrir/Ocultar Mini App" (verde) quando `miniAppHtml` já existe
-  - Iframe sandboxed com `srcDoc={miniAppHtml}` + botão "Copiar HTML"
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-### `src/hooks/useUnifiedMemory.ts`
-- Adicionar `mini_app_html?: string | null` e `mini_app_generated_at?: string | null` ao `UnifiedMemoryEntry`
+### Details
 
-## Arquivos
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-| Arquivo | Ação |
-|---------|------|
-| `src/components/skills/SkillIntentModal.tsx` | **DELETAR** |
-| `src/pages/prompt/PromptMode.tsx` | **EDITAR** — remover modal, adicionar mini app |
-| `src/hooks/useUnifiedMemory.ts` | **EDITAR** — adicionar campos mini_app |
-| `supabase/functions/generate-mini-app/index.ts` | **CRIAR** — edge function para gerar HTML |
-
-## Fluxo do Mini App
-
-```text
-Resultado da Skill exibido
-        ↓
-Clica "Gerar Mini App"
-        ↓
-Edge function gera HTML via LLM (0 créditos extras)
-        ↓
-HTML salvo em prompt_memory.mini_app_html
-        ↓
-iframe exibe preview inline
-        ↓
-Botão "Copiar HTML" disponível
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
 
