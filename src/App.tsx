@@ -42,7 +42,6 @@ import ReferralPage from "./pages/ReferralPage";
 const queryClient = new QueryClient();
 
 function App() {
-
   useEffect(() => {
     supabase.auth.getSession();
 
@@ -58,93 +57,95 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LoadingProvider>
-      <TooltipProvider delayDuration={300} skipDelayDuration={100}>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
+        <TooltipProvider delayDuration={300} skipDelayDuration={100}>
+          <Toaster />
+          <Sonner />
 
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
+          <BrowserRouter basename="/genius">
+            <Routes>
 
-            <Route
-              path="/dashboard"
-              element={<AuthGuard><Dashboard /></AuthGuard>}
-            />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
 
-            <Route
-              path="/prompt"
-              element={<AuthGuard><PromptMode /></AuthGuard>}
-            />
+              <Route
+                path="/dashboard"
+                element={<AuthGuard><Dashboard /></AuthGuard>}
+              />
 
-            <Route
-              path="/saas-spec"
-              element={<AuthGuard><SaasMode /></AuthGuard>}
-            />
+              <Route
+                path="/prompt"
+                element={<AuthGuard><PromptMode /></AuthGuard>}
+              />
 
-            <Route
-              path="/mixed"
-              element={<AuthGuard><MistoMode /></AuthGuard>}
-            />
+              <Route
+                path="/saas-spec"
+                element={<AuthGuard><SaasMode /></AuthGuard>}
+              />
 
-            <Route
-              path="/misto"
-              element={<AuthGuard><MistoMode /></AuthGuard>}
-            />
+              <Route
+                path="/mixed"
+                element={<AuthGuard><MistoMode /></AuthGuard>}
+              />
 
-            <Route
-              path="/build"
-              element={<AuthGuard><BuildMode /></AuthGuard>}
-            />
+              <Route
+                path="/misto"
+                element={<AuthGuard><MistoMode /></AuthGuard>}
+              />
 
-            <Route
-              path="/memory"
-              element={<AuthGuard><MemoryPage /></AuthGuard>}
-            />
+              <Route
+                path="/build"
+                element={<AuthGuard><BuildMode /></AuthGuard>}
+              />
 
-            <Route
-              path="/history"
-              element={<AuthGuard><HistoryPage /></AuthGuard>}
-            />
+              <Route
+                path="/memory"
+                element={<AuthGuard><MemoryPage /></AuthGuard>}
+              />
 
-            <Route
-              path="/profile"
-              element={<AuthGuard><ProfilePage /></AuthGuard>}
-            />
+              <Route
+                path="/history"
+                element={<AuthGuard><HistoryPage /></AuthGuard>}
+              />
 
-            <Route
-              path="/billing/success"
-              element={<AuthGuard><BillingSuccess /></AuthGuard>}
-            />
+              <Route
+                path="/profile"
+                element={<AuthGuard><ProfilePage /></AuthGuard>}
+              />
 
-            <Route
-              path="/indicacoes"
-              element={<AuthGuard><ReferralPage /></AuthGuard>}
-            />
+              <Route
+                path="/billing/success"
+                element={<AuthGuard><BillingSuccess /></AuthGuard>}
+              />
 
-            {/* Admin */}
+              <Route
+                path="/indicacoes"
+                element={<AuthGuard><ReferralPage /></AuthGuard>}
+              />
 
-            <Route
-              path="/admin"
-              element={<SuperAdminGuard><AdminLayout /></SuperAdminGuard>}
-            >
-              <Route index element={<AdminOverview />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="prompts" element={<AdminPrompts />} />
-              <Route path="billing" element={<AdminBillingPlans />} />
-              <Route path="billing/plans" element={<AdminBillingPlans />} />
-              <Route path="settings/stripe" element={<AdminStripeSettings />} />
-              <Route path="ai-config" element={<AdminAIConfig />} />
-              <Route path="settings/whatsapp" element={<WhatsAppSettings />} />
-              <Route path="logs" element={<AdminAuditLogs />} />
-              <Route path="flags" element={<AdminFlags />} />
-            </Route>
+              {/* Admin */}
 
-            <Route path="*" element={<NotFound />} />
+              <Route
+                path="/admin"
+                element={<SuperAdminGuard><AdminLayout /></SuperAdminGuard>}
+              >
+                <Route index element={<AdminOverview />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="prompts" element={<AdminPrompts />} />
+                <Route path="billing" element={<AdminBillingPlans />} />
+                <Route path="billing/plans" element={<AdminBillingPlans />} />
+                <Route path="settings/stripe" element={<AdminStripeSettings />} />
+                <Route path="ai-config" element={<AdminAIConfig />} />
+                <Route path="settings/whatsapp" element={<WhatsAppSettings />} />
+                <Route path="logs" element={<AdminAuditLogs />} />
+                <Route path="flags" element={<AdminFlags />} />
+              </Route>
 
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              <Route path="*" element={<NotFound />} />
+
+            </Routes>
+          </BrowserRouter>
+
+        </TooltipProvider>
       </LoadingProvider>
     </QueryClientProvider>
   );
