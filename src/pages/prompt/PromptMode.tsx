@@ -143,7 +143,7 @@ export default function PromptMode() {
       setStep("generating");
 
       const { data: sessionRecord, error: sessErr } = await supabase
-        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "prompt" as const, tokens_total: 0 })
+        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: (inputMode === "skills" ? "skill" : "prompt") as any, tokens_total: 0 })
         .select().single();
       if (sessErr) throw sessErr;
       const currentSessionId = sessionRecord.id;
