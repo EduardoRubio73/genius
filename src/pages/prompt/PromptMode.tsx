@@ -52,6 +52,7 @@ export default function PromptMode() {
   const startTime = useRef(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
     try {
