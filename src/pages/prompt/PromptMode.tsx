@@ -33,7 +33,7 @@ export default function PromptMode() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isSkillMode = searchParams.get("mode") === "skill";
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const { theme, toggleTheme } = useTheme();
   const orgId = profile?.personal_org_id ?? undefined;
