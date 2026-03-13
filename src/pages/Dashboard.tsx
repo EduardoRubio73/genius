@@ -380,16 +380,18 @@ export default function Dashboard() {
               </div>
 
               {/* Mini stats — 4 columns */}
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 border-t border-border pt-3.5">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 border-t border-border pt-3.5">
                 {[
-                  { label: "Prompts Gerados", value: isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0) },
-                  { label: "Specs Criadas", value: isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0) },
-                  { label: "Total de Ações", value: isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0)) },
-                  { label: "Média Rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—") },
+                  { label: "Prompts", value: isLoading ? "—" : formatNumber(promptCount ?? 0), emoji: "✨" },
+                  { label: "Skills", value: isLoading ? "—" : formatNumber(skillCount ?? 0), emoji: "⚡" },
+                  { label: "Specs", value: isLoading ? "—" : formatNumber(specsCount ?? 0), emoji: "📐" },
+                  { label: "Misto", value: isLoading ? "—" : formatNumber(mistoCount ?? 0), emoji: "🔀" },
+                  { label: "Build", value: isLoading ? "—" : formatNumber(buildCount ?? 0), emoji: "🚀" },
+                  { label: "Média Rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—"), emoji: "⭐" },
                 ].map((s) => (
                   <div key={s.label} className="text-center">
                     <p className="font-heading text-2xl font-extrabold text-foreground">{s.value}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.emoji} {s.label}</p>
                   </div>
                 ))}
               </div>
