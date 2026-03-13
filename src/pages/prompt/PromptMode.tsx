@@ -130,7 +130,7 @@ export default function PromptMode() {
         setGenStatus("refining");
         setFields(manualFields);
         const r = await callEdgeFunction("refine-prompt", {
-          action: "refine", fields: manualFields, destino, sessionId: currentSessionId,
+          action: "refine", fields: manualFields, destino, sessionId: currentSessionId, skills: selectedSkills,
         });
         localRefined = {
           especialidade: r.especialidade || manualFields.especialidade,
