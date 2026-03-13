@@ -175,7 +175,7 @@ export default function PromptMode() {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
-  }, [orgId, user, freeText, manualFields, inputMode, destino, fetchBalance]);
+  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkills, fetchBalance]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
