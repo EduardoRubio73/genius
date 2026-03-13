@@ -90,6 +90,7 @@ export function PromptInput({
   onGenerate, isGenerating, searching,
   selectedSkill, onSelectedSkillChange,
   skillComplement, onSkillComplementChange,
+  isSkillMode,
 }: PromptInputProps) {
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
