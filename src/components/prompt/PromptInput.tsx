@@ -335,6 +335,7 @@ export function PromptInput({
         </div>
       )}
 
+      <button className="misto-gen-btn" onClick={onGenerate} disabled={!canGenerate} type="button">
         {searching ? "🔍 Consultando histórico..." : isGenerating ? "⏳ Gerando..." : isSkillMode || inputMode === "skills" ? "⚡ Gerar Skill — 2 cotas" : "✨ Gerar Prompt — 1 cota"}
       </button>
     </div>
