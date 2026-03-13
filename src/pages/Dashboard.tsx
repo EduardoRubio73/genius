@@ -50,6 +50,7 @@ const MODES = [
     cost: 1,
     href: "/prompt",
     colorScheme: "purple" as const,
+    tooltip: "Transforme uma ideia em texto livre em um prompt estruturado e otimizado para qualquer LLM.\nEx: 'Crie um chatbot de atendimento' → prompt completo com persona, contexto e formato.",
   },
   {
     title: "Skill",
@@ -58,6 +59,7 @@ const MODES = [
     cost: 2,
     href: "/prompt?mode=skill",
     colorScheme: "amber" as const,
+    tooltip: "Escolha um agente especialista pronto e gere instruções otimizadas para a tarefa.\nEx: Selecione 'Code Reviewer' e receba um prompt de revisão de código.",
   },
   {
     title: "SaaS Spec",
@@ -66,6 +68,7 @@ const MODES = [
     cost: 2,
     href: "/saas-spec",
     colorScheme: "blue" as const,
+    tooltip: "Responda 7 perguntas sobre seu produto e receba uma especificação técnica completa.\nEx: Descreva seu SaaS de gestão → spec com stack, features e modelo de dados.",
   },
   {
     title: "Modo Misto",
@@ -74,6 +77,7 @@ const MODES = [
     cost: 2,
     href: "/mixed",
     colorScheme: "green" as const,
+    tooltip: "Combina Prompt + Spec em um fluxo automatizado. A IA extrai campos, refina e gera a spec.\nEx: Descreva 'app de delivery' → prompt refinado + spec técnica.",
   },
   {
     title: "BUILD Engine",
@@ -82,6 +86,7 @@ const MODES = [
     cost: 5,
     href: "/build",
     colorScheme: "orange" as const,
+    tooltip: "Da ideia ao pacote completo: PRD, ERD, RBAC, API e mais.\nEx: 'Marketplace de freelancers' → 10 documentos prontos para deploy.",
   },
 ] as const;
 
