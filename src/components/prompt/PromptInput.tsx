@@ -72,6 +72,7 @@ interface PromptInputProps {
   onDestinoChange: (v: Enums<"destination_platform">) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  searching?: boolean;
   selectedSkill: string | null;
   onSelectedSkillChange: (skill: string | null) => void;
   skillComplement: string;
@@ -83,7 +84,7 @@ export function PromptInput({
   manualFields, onManualFieldsChange,
   inputMode, onInputModeChange,
   destino, onDestinoChange,
-  onGenerate, isGenerating,
+  onGenerate, isGenerating, searching,
   selectedSkill, onSelectedSkillChange,
   skillComplement, onSkillComplementChange,
 }: PromptInputProps) {
@@ -314,7 +315,7 @@ export function PromptInput({
       )}
 
       <button className="misto-gen-btn" onClick={onGenerate} disabled={!canGenerate} type="button">
-        ✨ Gerar Prompt — 1 cota
+        {searching ? "🔍 Consultando histórico..." : isGenerating ? "⏳ Gerando..." : "✨ Gerar Prompt — 1 cota"}
       </button>
     </div>
   );
