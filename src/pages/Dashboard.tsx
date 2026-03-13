@@ -183,6 +183,48 @@ export default function Dashboard() {
   const [modosOpen, setModosOpen] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
 
+  // Per-mode counts
+  const { data: promptCount } = useQuery({
+    queryKey: ["mode-count-prompt", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("prompt_memory").select("*", { count: "exact", head: true }).eq("org_id", orgId!).eq("categoria", "prompt");
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: skillCount } = useQuery({
+    queryKey: ["mode-count-skill", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("prompt_memory").select("*", { count: "exact", head: true }).eq("org_id", orgId!).eq("categoria", "skill");
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: mistoCount } = useQuery({
+    queryKey: ["mode-count-misto", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("prompt_memory").select("*", { count: "exact", head: true }).eq("org_id", orgId!).eq("categoria", "misto");
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: specsCount } = useQuery({
+    queryKey: ["mode-count-specs", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("saas_specs").select("*", { count: "exact", head: true }).eq("org_id", orgId!);
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: buildCount } = useQuery({
+    queryKey: ["mode-count-build", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("build_projects").select("*", { count: "exact", head: true }).eq("org_id", orgId!);
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
   const isQuotaLoading = profileLoading || quotaLoading;
