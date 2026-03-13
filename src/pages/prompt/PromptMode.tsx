@@ -100,7 +100,7 @@ export default function PromptMode() {
         // Distribute free text into fields
         setGenStatus("distributing");
         const d = await callEdgeFunction("refine-prompt", {
-          action: "distribute", freeText, destino, sessionId: currentSessionId,
+          action: "distribute", freeText, destino, sessionId: currentSessionId, skills: selectedSkills,
         });
         const extracted: MistoFields = {
           especialidade: d.especialidade || "", persona: d.persona || "",
