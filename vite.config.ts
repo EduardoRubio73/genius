@@ -4,53 +4,27 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: "/",
+
   server: {
-    base: "/",
-      host: "::",
+    host: "::",
     port: 8080,
     hmr: {
       overlay: false,
     },
   },
+
   plugins: [
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      manifest: {
-        name: "Prompt Genius SaaS Builder",
-        short_name: "PromptGenius",
-        description: "Plataforma para criação e gestão de prompts com recursos SaaS.",
-        theme_color: "#0f172a",
-        background_color: "#ffffff",
-        display: "standalone",
-        start_url: "/",
-        icons: [
-          {
-            src: "/icons/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-180x180.png",
-            sizes: "180x180",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
+
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.destination === "image",
@@ -77,12 +51,31 @@ export default defineConfig(({ mode }) => ({
           },
         ],
       },
-      devOptions: {
-        enabled: true,
+
+      manifest: {
+        name: "Prompt Genius SaaS Builder",
+        short_name: "PromptGenius",
+        description: "Plataforma para criação e gestão de prompts com recursos SaaS.",
+        theme_color: "#0f172a",
+        background_color: "#ffffff",
+        display: "standalone",
+        start_url: "/",
+        icons: [
+          { src: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+          { src: "/icons/icon-180x180.png", sizes: "180x180", type: "image/png" },
+          { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+        ]
       },
+
+      devOptions: {
+        enabled: false
+      }
     }),
-    mode === "development" && componentTagger(),
+
+    mode === "development" && componentTagger()
   ].filter(Boolean),
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
