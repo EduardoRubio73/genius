@@ -13,6 +13,7 @@ import {
   FileCode,
   Layers,
   Rocket,
+  Zap,
   Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ interface UnifiedMemorySidebarProps {
 const MODE_TABS: { value: "all" | MemoryMode; label: string; icon: React.ElementType }[] = [
   { value: "all", label: "Todos", icon: Brain },
   { value: "prompt", label: "Prompts", icon: Sparkles },
+  { value: "skill", label: "Skill", icon: Zap },
   { value: "saas", label: "Specs", icon: FileCode },
   { value: "mixed", label: "Misto", icon: Layers },
   { value: "build", label: "Build", icon: Rocket },
@@ -56,6 +58,7 @@ const FILTER_TABS = [
 
 const TYPE_COLORS: Record<MemoryMode, string> = {
   prompt: "text-primary bg-primary/10 border-primary/20",
+  skill: "text-amber-600 bg-amber-500/10 border-amber-500/20",
   saas: "text-accent bg-accent/10 border-accent/20",
   mixed: "text-secondary bg-secondary/10 border-secondary/20",
   build: "text-orange-500 bg-orange-500/10 border-orange-500/20",
@@ -63,6 +66,7 @@ const TYPE_COLORS: Record<MemoryMode, string> = {
 
 const TYPE_ICONS: Record<MemoryMode, React.ElementType> = {
   prompt: Sparkles,
+  skill: Zap,
   saas: FileCode,
   mixed: Layers,
   build: Rocket,
@@ -112,7 +116,7 @@ function EntryCard({
           )}
         >
           <TypeIcon className="w-2.5 h-2.5" />
-          {entry.type === "prompt" ? "Prompt" : entry.type === "saas" ? "Spec" : entry.type === "build" ? "Build" : "Misto"}
+          {entry.type === "prompt" ? "Prompt" : entry.type === "skill" ? "Skill" : entry.type === "saas" ? "Spec" : entry.type === "build" ? "Build" : "Misto"}
         </span>
 
         <div className="flex items-center gap-1.5 ml-auto">
@@ -275,6 +279,7 @@ export function UnifiedMemorySidebar({
                 {MODE_TABS.map(({ value, label, icon: Icon }) => {
                   const count = value === "all" ? counts.all
                     : value === "prompt" ? counts.prompt
+                    : value === "skill" ? (counts as any).skill ?? 0
                     : value === "saas" ? counts.saas
                     : value === "mixed" ? (counts as any).mixed ?? 0
                     : value === "build" ? (counts as any).build ?? 0
@@ -398,6 +403,7 @@ export function UnifiedMemorySidebar({
               <div className="px-3 py-2 border-t border-border shrink-0">
                 <p className="text-[9px] text-muted-foreground text-center tabular-nums">
                   {counts.prompt} prompt{counts.prompt !== 1 ? "s" : ""} ·{" "}
+                  {(counts as any).skill ?? 0} skill{(counts as any).skill !== 1 ? "s" : ""} ·{" "}
                   {counts.saas} spec{counts.saas !== 1 ? "s" : ""} ·{" "}
                   {counts.build} build{counts.build !== 1 ? "s" : ""} ·{" "}
                   {counts.favorites} favorito{counts.favorites !== 1 ? "s" : ""}
@@ -413,6 +419,7 @@ export function UnifiedMemorySidebar({
             <TooltipProvider>
               {[
                 { icon: Sparkles, count: counts.prompt, label: "Prompts", color: "text-primary" },
+                { icon: Zap, count: (counts as any).skill ?? 0, label: "Skills", color: "text-amber-500" },
                 { icon: FileCode, count: counts.saas, label: "Specs", color: "text-accent" },
                 { icon: Rocket, count: counts.build, label: "Builds", color: "text-orange-500" },
                 { icon: Heart, count: counts.favorites, label: "Favoritos", color: "text-rose-400" },

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type MemoryMode = "prompt" | "saas" | "mixed" | "build";
+export type MemoryMode = "prompt" | "skill" | "saas" | "mixed" | "build";
 
 export interface UnifiedMemoryEntry {
   id: string;
@@ -111,7 +111,7 @@ export function useUnifiedMemory({
         // ── Normalize prompt entries ───────────────────────────────────
         const normalized_prompts: UnifiedMemoryEntry[] = (pData ?? []).map((e) => ({
           id: e.id,
-          type: (e.categoria === "misto" ? "mixed" : "prompt") as MemoryMode,
+          type: (e.categoria === "misto" ? "mixed" : e.categoria === "skill" ? "skill" : "prompt") as MemoryMode,
           title: e.especialidade || e.categoria || "Prompt sem título",
           preview: e.prompt_gerado?.slice(0, 120) || "",
           fullContent: e.prompt_gerado || "",
@@ -246,6 +246,7 @@ export function useUnifiedMemory({
     () => ({
       all: promptEntries.length + saasEntries.length + buildEntries.length,
       prompt: promptEntries.filter((e) => e.type === "prompt").length,
+      skill: promptEntries.filter((e) => e.type === "skill").length,
       saas: saasEntries.length,
       mixed: promptEntries.filter((e) => e.type === "mixed").length,
       build: buildEntries.length,
