@@ -92,6 +92,7 @@ export function PromptInput({
   skillComplement, onSkillComplementChange,
   isSkillMode,
 }: PromptInputProps) {
+  const [customSkillName, setCustomSkillName] = useState("");
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
   const canGenerate =
@@ -296,6 +297,37 @@ export function PromptInput({
             onChange={(e) => onSkillComplementChange(e.target.value.slice(0, 1200))}
             disabled={isGenerating}
             style={{ minHeight: 120, marginTop: 12 }}
+          />
+          <div className="misto-char-count">
+            {skillComplement.length} / 1200
+          </div>
+        </div>
+      )}
+
+      {/* Custom skill card */}
+      {inputMode === "skills" && selectedSkill === "custom" && (
+        <div className="complement-card" style={{ marginTop: 20 }}>
+          <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="selected-skill-tag">🛠️ Skill Personalizada</span>
+          </div>
+          <div className="card-hint">
+            Crie um agente sob medida. Defina o nome e as instruções que a IA deve seguir.
+          </div>
+          <input
+            className="prompt-field-input"
+            placeholder="Nome da skill (ex: Especialista em Next.js, Revisor de Copy...)"
+            value={customSkillName}
+            onChange={(e) => setCustomSkillName(e.target.value.slice(0, 100))}
+            disabled={isGenerating}
+            style={{ marginTop: 12, width: "100%" }}
+          />
+          <textarea
+            className="misto-textarea"
+            placeholder="Descreva as instruções do agente: o que ele deve fazer, como deve se comportar, restrições, formato de saída..."
+            value={skillComplement}
+            onChange={(e) => onSkillComplementChange(e.target.value.slice(0, 1200))}
+            disabled={isGenerating}
+            style={{ minHeight: 140, marginTop: 12 }}
           />
           <div className="misto-char-count">
             {skillComplement.length} / 1200

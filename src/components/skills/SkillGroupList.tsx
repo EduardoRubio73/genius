@@ -66,9 +66,9 @@ export function SkillGroupList({ selectedSkill, onSelectSkill }: SkillGroupListP
       <button
         type="button"
         className="skill-custom-btn"
-        onClick={() => onSelectSkill("custom")}
+        onClick={() => onSelectSkill(selectedSkill === "custom" ? null : "custom")}
       >
-        ➕ Criar Skill Personalizada
+        {selectedSkill === "custom" ? "✅ Skill Personalizada" : "➕ Criar Skill Personalizada"}
       </button>
     </div>
   );

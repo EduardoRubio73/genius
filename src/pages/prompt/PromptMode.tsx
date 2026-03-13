@@ -33,7 +33,7 @@ export default function PromptMode() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isSkillMode = searchParams.get("mode") === "skill";
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const { theme, toggleTheme } = useTheme();
   const orgId = profile?.personal_org_id ?? undefined;
@@ -86,7 +86,8 @@ export default function PromptMode() {
   const { showLoading, hideLoading } = useLoading();
 
   const handleGenerate = useCallback(async (forceAI?: boolean) => {
-    if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
+    if (authLoading) { toast.info("Aguarde, carregando sessão..."); return; }
+    if (!orgId || !user) { toast.error("Usuário não autenticado. Faça login novamente."); return; }
 
     const balance = await fetchBalance();
     if (!balance) { toast.error("Erro ao verificar cotas"); return; }
@@ -249,7 +250,7 @@ export default function PromptMode() {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
-  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
+  }, [orgId, user, authLoading, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
 
   const handleGenerateClick = useCallback(() => {
     handleGenerate();
