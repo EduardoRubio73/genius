@@ -268,8 +268,23 @@ export function PromptInput({
       {/* Complement card — appears when a skill is selected in skills mode */}
       {inputMode === "skills" && selectedSkill && selectedSkillData && (
         <div className="complement-card" style={{ marginTop: 20 }}>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
             <span className="selected-skill-tag">{selectedSkillData.label}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p className="font-semibold mb-1">Sugestões de uso:</p>
+                  <ul className="text-xs space-y-0.5 list-disc pl-3">
+                    <li>Descreva o contexto do seu projeto</li>
+                    <li>Adicione restrições ou preferências</li>
+                    <li>Informe stack, público-alvo ou domínio</li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="card-hint">
             O agente já possui instruções especializadas. Use este campo apenas para complementar com detalhes do seu caso específico.
