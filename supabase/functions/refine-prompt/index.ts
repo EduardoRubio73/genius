@@ -55,8 +55,8 @@ function parseJsonFromLLM(text: string): Record<string, unknown> {
   }
 }
 
-async function handleDistribute(freeText: string, destino: string) {
-  const system = `Você é um assistente especializado em engenharia de prompt. 
+async function handleDistribute(freeText: string, destino: string, skillSystemPrompt?: string) {
+  let system = `Você é um assistente especializado em engenharia de prompt. 
 Dado um texto livre do usuário, extraia e distribua as informações nos seguintes campos JSON:
 - especialidade: área de conhecimento do agente (ex: "Full-Stack Developer", "UX Designer")
 - persona: papel/personalidade que o agente deve assumir
@@ -68,12 +68,16 @@ Dado um texto livre do usuário, extraia e distribua as informações nos seguin
 Responda APENAS com JSON válido, sem markdown. Exemplo:
 {"especialidade":"...","persona":"...","tarefa":"...","objetivo":"...","contexto":"...","destino":"${destino}"}`;
 
+  if (skillSystemPrompt) {
+    system = `## Perfil do Assistente\n${skillSystemPrompt}\n\n${system}`;
+  }
+
   const result = await callLLM(system, freeText);
   return parseJsonFromLLM(result);
 }
 
-async function handleRefine(fields: Record<string, string>, destino: string) {
-  const system = `Você é um engenheiro de prompt sênior. Receba campos estruturados e:
+async function handleRefine(fields: Record<string, string>, destino: string, skillSystemPrompt?: string) {
+  let system = `Você é um engenheiro de prompt sênior. Receba campos estruturados e:
 1. Melhore cada campo com mais clareza e especificidade
 2. Gere um prompt final otimizado para a plataforma "${destino}"
 
@@ -81,6 +85,10 @@ O prompt final deve ser estruturado, claro, e pronto para uso direto na platafor
 
 Responda APENAS com JSON válido contendo os campos melhorados + "prompt_gerado":
 {"especialidade":"...","persona":"...","tarefa":"...","objetivo":"...","contexto":"...","destino":"...","prompt_gerado":"O prompt completo e otimizado aqui"}`;
+
+  if (skillSystemPrompt) {
+    system = `## Perfil do Assistente\n${skillSystemPrompt}\n\n${system}`;
+  }
 
   const userMsg = JSON.stringify(fields);
   const result = await callLLM(system, userMsg);
@@ -185,7 +193,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId } = body ?? {};
+    const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId, skillSystemPrompt } = body ?? {};
 
     const isUuid = (value: string) =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -252,10 +260,10 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "distribute":
-        result = await handleDistribute(freeText || "", destino || "lovable");
+        result = await handleDistribute(freeText || "", destino || "lovable", skillSystemPrompt);
         break;
       case "refine":
-        result = await handleRefine(fields || {}, destino || "lovable");
+        result = await handleRefine(fields || {}, destino || "lovable", skillSystemPrompt);
         break;
       case "saas-spec":
         result = await handleSaasSpec(
