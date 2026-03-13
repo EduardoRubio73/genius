@@ -92,6 +92,7 @@ export function PromptInput({
   skillComplement, onSkillComplementChange,
   isSkillMode,
 }: PromptInputProps) {
+  const [customSkillName, setCustomSkillName] = useState("");
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
   const canGenerate =

@@ -250,7 +250,7 @@ export default function PromptMode() {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
-  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
+  }, [orgId, user, authLoading, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
 
   const handleGenerateClick = useCallback(() => {
     handleGenerate();
