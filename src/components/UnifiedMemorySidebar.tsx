@@ -13,6 +13,7 @@ import {
   FileCode,
   Layers,
   Rocket,
+  Zap,
   Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
