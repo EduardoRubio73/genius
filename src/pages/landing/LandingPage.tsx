@@ -444,8 +444,10 @@ const handleSubscribe = async (priceId: string | null) => {
             </div>
             <div className="mock-body">
               <div className="mp"><div className="mp-i">✨</div><div className="mp-n">Gerador Prompt</div><div className="mp-d">Texto → Estruturado</div></div>
+              <div className="mp"><div className="mp-i">🧠</div><div className="mp-n">Modo Skill</div><div className="mp-d">60+ agentes de IA</div></div>
               <div className="mp hi"><div className="mp-i">⚡</div><div className="mp-n">Modo Misto</div><div className="mp-d">Prompt + SaaS juntos</div></div>
               <div className="mp"><div className="mp-i">🏗️</div><div className="mp-n">SaaS Builder</div><div className="mp-d">7 perguntas → Spec</div></div>
+              <div className="mp"><div className="mp-i">⚙️</div><div className="mp-n">BUILD Engine</div><div className="mp-d">Ideia → Deploy-ready</div></div>
               <div className="mock-sep"><div className="sep-l" /><span>gerado em ~3s · 1 cota consumida</span><div className="sep-l" /></div>
               <div className="mock-out"><span>// Prompt gerado:</span> Atue como especialista em SaaS B2B. Persona: consultor direto. <span>TAREFA:</span> Criar sistema de CRM com IA... <span>// + Spec Next.js 15 + Supabase + Stripe pronta para Lovable ✓</span></div>
             </div>
