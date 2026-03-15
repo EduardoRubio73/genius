@@ -5,6 +5,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
+  base: "/",
 
   server: {
     host: "::",
@@ -16,47 +17,11 @@ export default defineConfig(({ mode }) => ({
 
   plugins: [
     react(),
+    componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
-
-      workbox: {
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true
-      },
-
-      devOptions: {
-        enabled: false
-      },
-
-      manifest: {
-        name: "Prompt Genius SaaS Builder",
-        short_name: "PromptGenius",
-
-        start_url: "/",
-        scope: "/",
-
-        display: "standalone",
-        theme_color: "#0f172a",
-        background_color: "#ffffff",
-
-        icons: [
-          {
-            src: "/icons/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png"
-          },
-          {
-            src: "/icons/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png"
-          }
-        ]
-      }
-    }),
-
-    mode === "development" && componentTagger()
-  ].filter(Boolean),
+      registerType: "autoUpdate"
+    })
+  ],
 
   resolve: {
     alias: {
