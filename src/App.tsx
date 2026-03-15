@@ -67,7 +67,7 @@ function App() {
           <Toaster />
           <Sonner />
 
-          <BrowserRouter>
+          <BrowserRouter basename="/genius">
 
             <Routes>
 
