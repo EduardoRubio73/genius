@@ -405,13 +405,7 @@ export default function Login() {
   return (
     <div className="noise-overlay relative flex min-h-screen items-center justify-center px-4">
       <div className="relative z-10 w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <img src={logo} alt="Prompt Genius SaaS Builder" className="mx-auto mb-4 h-20 w-auto" />
-          <h1 className="font-heading text-2xl font-bold">Prompt Genius SaaS Builder Engineer</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isSignUp ? "Crie sua conta" : "Entre na sua conta"}
-          </p>
-        </div>
+        <AuthBrand subtitle={isSignUp ? "Crie sua conta" : undefined} />
 
         <form onSubmit={handleSubmit} className="glass-card space-y-4 p-6">
           {isSignUp && (
