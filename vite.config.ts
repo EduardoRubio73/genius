@@ -7,6 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(() => ({
   base: "/genius/",
 
+  
   server: {
     host: true,
     port: 8080,
