@@ -4,11 +4,11 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   base: "/",
 
   server: {
-    host: "::",
+    host: true,
     port: 8080,
     hmr: {
       overlay: false
@@ -17,9 +17,40 @@ export default defineConfig(({ mode }) => ({
 
   plugins: [
     react(),
+
     componentTagger(),
+
     VitePWA({
-      registerType: "autoUpdate"
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+
+      includeAssets: [
+        "favicon.ico",
+        "apple-touch-icon.png",
+        "icons/icon-192x192.png",
+        "icons/icon-512x512.png"
+      ],
+
+      manifest: {
+        name: "Genius",
+        short_name: "Genius",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#0f172a",
+        theme_color: "#0f172a",
+        icons: [
+          {
+            src: "/icons/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png"
+          },
+          {
+            src: "/icons/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png"
+          }
+        ]
+      }
     })
   ],
 
@@ -27,5 +58,11 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src")
     }
+  },
+
+  build: {
+    sourcemap: false,
+    outDir: "dist",
+    emptyOutDir: true
   }
 }));
