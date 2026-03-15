@@ -1,225 +1,214 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Genius</title>
-    <meta name="description" content="Gere e refine prompts com IA. Crie especificações SaaS completas.">
-    <meta name="author" content="Prompt Genius SaaS Builder" />
-    <meta name="theme-color" content="#0f172a" />
 
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
+<head>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <style>
-      #lovable-badge {
-        opacity: 0;
-        pointer-events: none;
-      }
+<title>Genius</title>
 
-      /* ============================= */
-      /* BADGE PRINCIPAL */
-      /* ============================= */
-      #genius-badge {
-        position: fixed;
-        right: max(18px, env(safe-area-inset-right));
-        bottom: max(18px, env(safe-area-inset-bottom));
-        z-index: 9999;
+<meta name="description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
+<meta name="author" content="Prompt Genius SaaS Builder" />
+<meta name="theme-color" content="#0f172a" />
 
-        display: inline-flex;
-        align-items: center;
-        gap: 0.6rem;
+<link rel="manifest" href="/genius/manifest.webmanifest" />
 
-        padding: 0.65rem 1.1rem;
-        border-radius: 999px;
+<link rel="apple-touch-icon" sizes="180x180" href="/genius/icons/icon-180x180.png" />
 
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: #f8fafc;
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-        font-family: "DM Sans", system-ui, -apple-system, sans-serif;
-        font-size: 0.9rem;
-        font-weight: 700;
+<link
+href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+rel="stylesheet"
+/>
 
-        box-shadow:
-          0 15px 40px rgba(0,0,0,0.5),
-          inset 0 0 0 1px rgba(255,255,255,0.08);
+<meta property="og:title" content="Genius" />
+<meta name="twitter:title" content="Genius" />
 
-        backdrop-filter: blur(14px);
-        cursor: pointer;
+<meta property="og:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
+<meta name="twitter:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
 
-        transition: all 0.25s ease;
-      }
+<meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772674392832-_BUILD_ENGINE-removebg-preview.webp" />
+<meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772674392832-_BUILD_ENGINE-removebg-preview.webp" />
 
-      #genius-badge:hover {
-        transform: translateY(-4px);
-        box-shadow:
-          0 20px 50px rgba(0,0,0,0.6),
-          inset 0 0 0 1px rgba(255,255,255,0.12);
-      }
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="og:type" content="website" />
 
-      #genius-badge img {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-      }
+<style>
 
-      /* ============================= */
-      /* DROPUP MENU */
-      /* ============================= */
-      #genius-menu {
-        position: fixed;
-        right: max(18px, env(safe-area-inset-right));
-        bottom: 95px;
-        z-index: 9998;
+#lovable-badge{
+opacity:0;
+pointer-events:none;
+}
 
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+/* BADGE */
 
-        padding: 14px;
-        min-width: 230px;
+#genius-badge{
 
-        background: rgba(15, 23, 42, 0.98);
-        border-radius: 20px;
+position:fixed;
+right:18px;
+bottom:18px;
 
-        box-shadow:
-          0 25px 70px rgba(0,0,0,0.65),
-          inset 0 0 0 1px rgba(255,255,255,0.05);
+z-index:9999;
 
-        backdrop-filter: blur(20px);
+display:inline-flex;
+align-items:center;
+gap:.6rem;
 
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-        pointer-events: none;
+padding:.65rem 1.1rem;
+border-radius:999px;
 
-        transition: all 0.25s cubic-bezier(.2,.8,.2,1);
-      }
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:#f8fafc;
 
-      #genius-menu.open {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        pointer-events: auto;
-      }
+font-family:system-ui,-apple-system,sans-serif;
+font-size:.9rem;
+font-weight:700;
 
-      #genius-menu a,
-      #genius-menu button {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+box-shadow:
+0 15px 40px rgba(0,0,0,.5),
+inset 0 0 0 1px rgba(255,255,255,.08);
 
-        padding: 10px 14px;
-        border-radius: 14px;
+cursor:pointer;
 
-        text-decoration: none;
-        color: #fff;
-        font-size: 0.875rem;
-        font-weight: 500;
+transition:.25s;
+}
 
-        background: transparent;
-        border: none;
-        cursor: pointer;
+#genius-badge:hover{
+transform:translateY(-4px);
+}
 
-        transition: all 0.2s ease;
-      }
+#genius-badge img{
+width:22px;
+height:22px;
+border-radius:50%;
+}
 
-      #genius-menu a:hover,
-      #genius-menu button:hover {
-        background: linear-gradient(
-          135deg,
-          rgba(255,255,255,0.08),
-          rgba(255,255,255,0.04)
-        );
-        transform: translateX(4px);
-      }
+/* MENU */
 
-      #genius-menu svg {
-        width: 18px;
-        height: 18px;
-        opacity: 0.85;
-      }
+#genius-menu{
 
-      @media (max-width: 480px) {
-        #genius-badge {
-          padding: 0.5rem;
-          gap: 0;
-        }
-        #genius-badge span {
-          display: none;
-        }
-        #genius-menu {
-          right: 10px;
-          bottom: 70px;
-          min-width: 200px;
-        }
-      }
-    </style>
-    <meta property="og:title" content="Genius">
-  <meta name="twitter:title" content="Genius">
-  <meta property="og:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas.">
-  <meta name="twitter:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas.">
-  <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772674392832-_BUILD_ENGINE-removebg-preview.webp">
-  <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772674392832-_BUILD_ENGINE-removebg-preview.webp">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta property="og:type" content="website">
+position:fixed;
+right:18px;
+bottom:95px;
+
+z-index:9998;
+
+display:flex;
+flex-direction:column;
+gap:8px;
+
+padding:14px;
+min-width:230px;
+
+background:rgba(15,23,42,.98);
+border-radius:20px;
+
+opacity:0;
+transform:translateY(20px) scale(.95);
+pointer-events:none;
+
+transition:.25s;
+}
+
+#genius-menu.open{
+opacity:1;
+transform:translateY(0) scale(1);
+pointer-events:auto;
+}
+
+#genius-menu a,
+#genius-menu button{
+
+display:flex;
+align-items:center;
+gap:10px;
+
+padding:10px 14px;
+border-radius:14px;
+
+color:#fff;
+text-decoration:none;
+font-size:.875rem;
+
+background:transparent;
+border:none;
+
+cursor:pointer;
+
+transition:.2s;
+}
+
+#genius-menu a:hover,
+#genius-menu button:hover{
+
+background:rgba(255,255,255,.06);
+transform:translateX(4px);
+
+}
+
+</style>
+
 </head>
 
-  <body>
-    <div id="root"></div>
+<body>
 
-    <!-- BADGE -->
-    <div id="genius-badge" aria-label="Selo Genius">
-      <img src="/icons/icon-192x192.png" alt="Ícone Genius" />
-      <span>Genius</span>
-    </div>
+<div id="root"></div>
 
-    <!-- DROPUP MENU -->
-    <div id="genius-menu">
+<!-- BADGE -->
 
-      <!-- Home -->
-      <a href="/">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10.5z"/>
-        </svg>
-        Home
-      </a>
+<div id="genius-badge">
 
-      <!-- Contato / Suporte -->
-      <button onclick="abrirModalContato()">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
-        </svg>
-        Contato / Suporte
-      </button>
+<img src="/genius/icons/icon-192x192.png" alt="Ícone Genius" />
 
-    </div>
+<span>Genius</span>
 
-    <script>
-      const badge = document.getElementById("genius-badge");
-      const menu = document.getElementById("genius-menu");
+</div>
 
-      badge.addEventListener("click", () => {
-        menu.classList.toggle("open");
-      });
+<!-- MENU -->
 
-      document.addEventListener("click", (e) => {
-        if (!badge.contains(e.target) && !menu.contains(e.target)) {
-          menu.classList.remove("open");
-        }
-      });
+<div id="genius-menu">
 
-      function abrirModalContato() {
-        document.dispatchEvent(new CustomEvent("open-contact-modal"));
-        menu.classList.remove("open");
-      }
-    </script>
+<a href="/">
 
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+Home
+
+</a>
+
+<button onclick="abrirModalContato()">
+
+Contato / Suporte
+
+</button>
+
+</div>
+
+<script>
+
+const badge=document.getElementById("genius-badge")
+const menu=document.getElementById("genius-menu")
+
+badge.addEventListener("click",()=>{
+menu.classList.toggle("open")
+})
+
+document.addEventListener("click",e=>{
+if(!badge.contains(e.target)&&!menu.contains(e.target)){
+menu.classList.remove("open")
+}
+})
+
+function abrirModalContato(){
+
+document.dispatchEvent(new CustomEvent("open-contact-modal"))
+
+menu.classList.remove("open")
+
+}
+
+</script>
+
+</body>
 </html>
